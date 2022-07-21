@@ -8,6 +8,7 @@ from sacred import Ingredient
 from sacred.run import Run
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 try:
     from pthelpers.reproducibility import Reproducer
@@ -165,30 +166,30 @@ class Trainer:
         for epoch in range(epoch_start, _config["epochs"]):
 
             running_loss = 0.0
-            for i, data in enumerate(self.__train_dataloader, 0):
-                # get the inputs; data is a list of [inputs, labels]
-                inputs, labels = data
+            with tqdm(self.__train_dataloader, unit="batch") as tepoch:
+                for i, (inputs, labels) in enumerate(tepoch, 0):
+                    tepoch.set_description(f"Epoch {epoch}")
 
-                # zero the parameter gradients
-                self.__optimizer.zero_grad()
+                    # zero the parameter gradients
+                    self.__optimizer.zero_grad()
 
-                # forward + backward + optimize
-                outputs = self.__model(inputs)
-                loss = self.__loss_fn(outputs, labels)
-                loss.backward()
-                self.__optimizer.step()
+                    # forward + backward + optimize
+                    outputs = self.__model(inputs)
+                    loss = self.__loss_fn(outputs, labels)
+                    loss.backward()
+                    self.__optimizer.step()
 
-                running_loss += loss.item()
+                    running_loss += loss.item()
+                    tepoch.set_postfix(loss=loss.item(), )#accuracy=100. * accuracy)
 
-                if _config["log_every_n_samples"]:
-                    batches = (i+1) + len(self.__train_dataloader) * epoch
-                    samples = batches * self.__train_dataloader.batch_size
-                    log_times = math.floor(samples) / _config["log_every_n_samples"]
-                    last_log_times = math.floor(samples - self.__train_dataloader.batch_size) / _config["log_every_n_samples"]
-                    if log_times > last_log_times:  # every time the log has been surpassed
-                        print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / samples :.3f}')
-                        _run.log_scalar("loss", running_loss / samples, samples)
-                        running_loss = 0.0
+                    if _config["log_every_n_samples"]:
+                        batches = (i + 1) + len(self.__train_dataloader) * epoch
+                        samples = batches * self.__train_dataloader.batch_size
+                        log_times = math.floor(samples) / _config["log_every_n_samples"]
+                        last_log_times = math.floor(samples - self.__train_dataloader.batch_size) / _config["log_every_n_samples"]
+                        if log_times > last_log_times:  # every time the log has been surpassed
+                            _run.log_scalar("loss", running_loss / samples, samples)
+                            running_loss = 0.0
 
         print('Finished Training')
         return
