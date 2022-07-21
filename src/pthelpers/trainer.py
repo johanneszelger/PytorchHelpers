@@ -185,8 +185,8 @@ class Trainer:
                     log_times = math.floor(samples) / _config["log_every_n_samples"]
                     last_log_times = math.floor(samples - self.__train_dataloader.batch_size) / _config["log_every_n_samples"]
                     if log_times > last_log_times:  # every time the log has been surpassed
-                        print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / (samples):.3f}')
-                        _run.log_scalar("loss", loss, samples)
+                        print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / samples :.3f}')
+                        _run.log_scalar("loss", running_loss / samples, samples)
                         running_loss = 0.0
 
         print('Finished Training')
