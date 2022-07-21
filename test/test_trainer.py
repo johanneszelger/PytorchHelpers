@@ -6,11 +6,11 @@ import unittest
 
 import torch.optim
 import torchvision.models
-from pthelpers.trainer import Trainer
 from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor
 
 from src.pthelpers.models.simple_net import Net
+from src.pthelpers.trainer import Trainer
 
 
 class TrainerTest(unittest.TestCase):
