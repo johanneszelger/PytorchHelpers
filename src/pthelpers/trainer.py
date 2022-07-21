@@ -230,13 +230,13 @@ class Trainer:
         loss = 0
         for x, y in self.__validation_dataloader:
             y_hat = self.__model(x)
-            loss = self.__loss_fn(y_hat, y)
+            loss = self.__loss_fn(y_hat, y).item()
             for metric in self.__val_metrics.values():
                 metric.update(y_hat, y.int())
 
         run.log_scalar(prefix+"loss", loss / len(dataloader), step)
         for name, metric in self.__val_metrics.items():
-            run.log_scalar(prefix+name, metric.compute() / len(self.__validation_dataloader) / self.__validation_dataloader.batch_size, step)
+            run.log_scalar(prefix+name, metric.compute().item() / len(self.__validation_dataloader) / self.__validation_dataloader.batch_size, step)
             metric.reset()
 
         # eval model with random params
