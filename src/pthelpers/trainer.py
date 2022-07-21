@@ -162,6 +162,8 @@ class Trainer:
         self.__loss_fn.to(device)
         for metric in self.__metrics.values():
             metric.to(device)
+        for metric in self.__val_metrics.values():
+            metric.to(device)
 
         if _config["log_every_n_batches"]:
             samples_per_log = _config["log_every_n_batches"] * self.__train_dataloader.batch_size
