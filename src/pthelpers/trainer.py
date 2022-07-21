@@ -207,7 +207,7 @@ class Trainer:
 
             if _config["log_every_n_batches"] is None:
                 batches = len(self.__train_dataloader) * (epoch + 1)
-                _run.log_scalar("loss", running_loss / samples_per_batch, batches)
+                _run.log_scalar("loss", running_loss / len(self.__train_dataloader) / self.__train_dataloader.batch_size, batches)
                 for name, metric in self.__metrics.items():
                     _run.log_scalar(name, metric_results[metric] / samples_per_batch, batches)
 
@@ -233,7 +233,7 @@ class Trainer:
 
         run.log_scalar(prefix+"loss", loss / len(dataloader), step)
         for name, metric in self.__val_metrics.items():
-            run.log_scalar(prefix+name, metric.compute() / len(self.__validation_dataloader), step)
+            run.log_scalar(prefix+name, metric.compute() / len(self.__validation_dataloader) / self.__validation_dataloader.batch_size, step)
             metric.reset()
 
         # eval model with random params
