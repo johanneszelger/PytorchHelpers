@@ -184,8 +184,8 @@ class Trainer:
                     if _config["log_every_n_samples"]:
                         batches = (i + 1) + len(self.__train_dataloader) * epoch
                         samples = batches * self.__train_dataloader.batch_size
-                        log_times = math.floor(samples) / _config["log_every_n_samples"]
-                        last_log_times = math.floor(samples - self.__train_dataloader.batch_size) / _config["log_every_n_samples"]
+                        log_times = math.floor(samples / _config["log_every_n_samples"])
+                        last_log_times = math.floor((samples - self.__train_dataloader.batch_size) / _config["log_every_n_samples"])
                         if log_times > last_log_times:  # every time the log has been surpassed
                             tepoch.set_postfix(loss=running_loss, )#accuracy=100. * accuracy)
                             _run.log_scalar("loss", running_loss / samples, samples)
