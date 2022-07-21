@@ -1,17 +1,17 @@
 from sacred import Ingredient
 from torchvision.transforms import transforms
 
-vision_transformas_factory_ingredient = Ingredient("transformation_factory")
+vision_transforms_factory_ingredient = Ingredient("transformation_factory")
 
 
-@vision_transformas_factory_ingredient.config
+@vision_transforms_factory_ingredient.config
 def cfg():
     width: None
     height: None
     force3Ch: False
 
 
-@vision_transformas_factory_ingredient.capture
+@vision_transforms_factory_ingredient.capture
 def generate_train_transforms(_config):
     trafos = []
     if _config["width"] and _config["height"]:
@@ -25,7 +25,7 @@ def generate_train_transforms(_config):
     return transforms.Compose(trafos)
 
 
-@vision_transformas_factory_ingredient.capture
+@vision_transforms_factory_ingredient.capture
 def generate_test_transforms(_config):
     trafos = []
     if _config["width"] and _config["height"]:
