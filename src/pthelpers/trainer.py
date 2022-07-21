@@ -210,7 +210,7 @@ class Trainer:
                 samples = len(self.__train_dataloader) * self.__train_dataloader.batch_size
                 _run.log_scalar("loss", running_loss / samples, batches)
                 for name, metric in self.__metrics.items():
-                    _run.log_scalar(name, metric_results[metric] / samples, batches)
+                    _run.log_scalar(name, metric_results[name] / samples, batches)
 
             if _config["val_every_n_batches"] is None and self.__validation_dataloader:
                 batches = len(self.__train_dataloader) * (epoch + 1)
