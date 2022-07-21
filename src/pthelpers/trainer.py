@@ -168,7 +168,7 @@ class Trainer:
         for epoch in range(epoch_start, _config["epochs"]):
             running_loss = 0.0
             metric_results = {}
-            for name, metric in self.__metrics.keys():
+            for name in self.__metrics.keys():
                 metric_results[name] = 0
             with tqdm(self.__train_dataloader, unit="batch") as tepoch:
                 for i, (inputs, y_hat) in enumerate(tepoch, 0):
