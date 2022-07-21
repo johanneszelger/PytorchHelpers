@@ -19,7 +19,7 @@ def generate_train_transforms(_config):
 
     trafos.append(transforms.ToTensor())
 
-    if _config["force3Ch"]:
+    if _config["force_3ch"]:
         trafos.append(transforms.Lambda(lambda x: x.repeat(3, 1, 1) if x.shape[0] == 1 else x))
 
     return transforms.Compose(trafos)
@@ -33,7 +33,7 @@ def generate_test_transforms(_config):
 
     trafos.append(transforms.ToTensor())
 
-    if _config["force3Ch"]:
+    if _config["force_3ch"]:
         trafos.append(transforms.Lambda(lambda x: x.repeat(3, 1, 1) if x.shape[0] == 1 else x))
 
     return transforms.Compose(trafos)
