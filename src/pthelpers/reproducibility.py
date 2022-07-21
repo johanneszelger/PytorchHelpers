@@ -19,7 +19,7 @@ class Reproducer:
         torch.manual_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
-        seed_set = True
+        Reproducer.seed_set = True
 
 
         def seed_worker(worker_id):
