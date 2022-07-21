@@ -22,7 +22,7 @@ def cfg():
     cp_dir = None
     epochs = 1
     start_epoch = 0
-    user_gpu = True
+    use_gpu = True
     log_every_n_samples = None
     validate_every_n_samples = None
     ignore_reproducibility = False
