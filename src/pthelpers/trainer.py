@@ -1,10 +1,12 @@
 """ Providing Trainer that automates pthelpers training """
+import copy
 
 import torch
 from sacred import Ingredient
 from sacred.run import Run
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
+from torchmetrics import Accuracy
 from tqdm import tqdm
 
 try:
@@ -21,7 +23,7 @@ def cfg():
     epochs = 1
     use_gpu = True
     log_every_n_batches = None
-    validate_every_n_samples = None
+    val_every_n_batches = None
     ignore_reproducibility = False
 
 
@@ -92,13 +94,15 @@ class Trainer:
             raise ValueError("Optimizer must be defined")
 
         if metrics is None:
-            metrics = {}
+            metrics = {'accuracy': Accuracy()}
 
         self.__model = model
         self.__train_dataloader = train_dataloader
+        self.__validation_dataloader = validation_dataloader
         self.__loss_fn = loss_fn
         self.__optimizer = optimizer
         self.__metrics = metrics
+        self.__val_metrics = copy.deepcopy(metrics)
 
 
         # self.device = "cuda" if torch.cuda.is_available() and use_gpu else "cpu"
@@ -162,32 +166,70 @@ class Trainer:
         samples_per_batch = _config["log_every_n_batches"] * self.__train_dataloader.batch_size
         epoch_start = 0
         for epoch in range(epoch_start, _config["epochs"]):
-
             running_loss = 0.0
+            metric_results = {}
+            for name, metric in self.__metrics.keys():
+                metric_results[name] = 0
             with tqdm(self.__train_dataloader, unit="batch") as tepoch:
-                for i, (inputs, labels) in enumerate(tepoch, 0):
+                for i, (inputs, y_hat) in enumerate(tepoch, 0):
                     tepoch.set_description(f"Epoch {epoch}")
 
                     # zero the parameter gradients
                     self.__optimizer.zero_grad()
 
                     # forward + backward + optimize
-                    outputs = self.__model(inputs)
-                    loss = self.__loss_fn(outputs, labels)
+                    y = self.__model(inputs)
+                    loss = self.__loss_fn(y, y_hat)
                     loss.backward()
                     self.__optimizer.step()
 
                     running_loss += loss.item()
+                    for name, metric in self.__metrics.items():
+                        metric_results[name] += metric(y_hat, y)
+
+                    tepoch.set_postfix(metric_results, loss=running_loss)
 
                     if _config["log_every_n_batches"] == 0:
                         batches = (i + 1) + len(self.__train_dataloader) * epoch
-                        if batches % _config["log_every_n_batches"]:  # every time the log has been surpassed
-                            tepoch.set_postfix(loss=running_loss, )#accuracy=100. * accuracy)
+                        if batches % _config["log_every_n_batches"]:
                             _run.log_scalar("loss", running_loss / samples_per_batch, batches)
                             running_loss = 0.0
+                            for name, metric in self.__metrics.items():
+                                _run.log_scalar(name, metric_results[metric] / samples_per_batch, batches)
+                                metric_results[name] = 0
+
+                    if _config["val_every_n_batches"] == 0:
+                        batches = (i + 1) + len(self.__train_dataloader) * epoch
+                        self.validate(self.__val_metrics, self.__validation_dataloader, _run, batches)
+
+            if _config["log_every_n_batches"] is None:
+                batches = len(self.__train_dataloader) * (epoch + 1)
+                self.validate(self.__metrics, self.__train_dataloader, _run, batches, "")
+
+            if _config["val_every_n_batches"] is None and self.__validation_dataloader:
+                batches = len(self.__train_dataloader) * (epoch + 1)
+                self.validate(self.__val_metrics, self.__validation_dataloader, _run, batches)
+
 
         print('Finished Training')
         return
+
+    @torch.no_grad()
+    def validate(self, metrics, dataloader, run, step, prefix="val"):
+        for metric in metrics.values():
+            metric.reset()
+
+        loss = 0
+        for x, y in dataloader:
+            y_hat = self.__model(x)
+            loss = self.__loss_fn(y_hat, y)
+            for metric in metrics.values():
+                metric.update(y_hat, y)
+
+        run.log_scalar(prefix+"loss", loss / len(dataloader), step)
+        for name, metric in metrics.items():
+            run.log_scalar(prefix+name, metric.compute() / len(dataloader), step)
+            metric.reset()
 
         # eval model with random params
         # if start_at_epoch == 0 and self.eval_first:
