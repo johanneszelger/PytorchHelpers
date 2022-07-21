@@ -234,7 +234,7 @@ class Trainer:
             for metric in self.__val_metrics.values():
                 metric.update(y_hat, y.int())
 
-        run.log_scalar(prefix+"loss", loss / len(dataloader), step)
+        run.log_scalar(prefix+"loss", loss / len(self.__validation_dataloader), step)
         for name, metric in self.__val_metrics.items():
             run.log_scalar(prefix+name, metric.compute().item() / len(self.__validation_dataloader) / self.__validation_dataloader.batch_size, step)
             metric.reset()
