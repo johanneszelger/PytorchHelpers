@@ -1,6 +1,4 @@
 """ Providing Trainer that automates pthelpers training """
-import os
-import os.path as osp
 
 import torch
 from sacred import Ingredient
@@ -192,70 +190,70 @@ class Trainer:
         return
 
         # eval model with random params
-        if start_at_epoch == 0 and self.eval_first:
-            print("doing evaluation before training")
-            self.__validate__(0, self.__train_dataloader)
-            self.__validate__(0, self.__validation_dataloader)
-
-        step = start_at_epoch * len(self.__train_dataloader)
-
-        # keep track of results
-        targets_full = []
-        outputs_full = []
-
-        for epoch in range(start_at_epoch, until_epoch):
-            self.current_epoch += 1
-            # Print epoch
-            print(f'Starting epoch {self.current_epoch}')
-
-            # Iterate over the DataLoader for training data
-            for _, data in enumerate(self.__train_dataloader, 0):
-                step += 1
-
-                # Get inputs
-                inputs, targets = data
-
-                # Zero the gradients
-                self.optimizer.zero_grad()
-
-                # Perform forward pass
-                outputs = self.model(inputs)
-
-                targets_full += [targets]
-                outputs_full += [outputs]
-
-                # Compute loss
-                loss = self.loss_fn(outputs, targets)
-
-                # Perform backward pass
-                loss.backward()
-
-                # Perform optimization
-                self.optimizer.step()
-
-                # print/log train and val
-                if self.validate_every_steps and step % self.validate_every_steps == 0:
-                    outputs_full = torch.cat(outputs_full, dim=0)
-                    targets_full = torch.cat(targets_full, dim=0)
-                    self.__calc_metrics_print_save__(outputs_full, targets_full, step, False)
-                    outputs_full = []
-                    targets_full = []
-                    self.__validate__(step)
-
-            if self.checkpoints_dir:
-                self.__save__(osp.join(self.checkpoints_dir, f'checkpoint_{self.current_epoch}.pth'))
-
-        # final eval at end of training
-        if step % self.validate_every_steps != 0:
-            self.__validate__(step, self.__train_dataloader)
-            self.__validate__(step, self.__validation_dataloader)
-
-        if self.remove_cp_after_training and self.checkpoints_dir:
-            for f in os.listdir(self.checkpoints_dir):
-                if f != f'checkpoint_{until_epoch}.pth' and f != 'best.pth':
-                    os.remove(osp.join(self.checkpoints_dir, f))
-
-        self.__close_writers__()
+        # if start_at_epoch == 0 and self.eval_first:
+        #     print("doing evaluation before training")
+        #     self.__validate__(0, self.__train_dataloader)
+        #     self.__validate__(0, self.__validation_dataloader)
+        #
+        # step = start_at_epoch * len(self.__train_dataloader)
+        #
+        # # keep track of results
+        # targets_full = []
+        # outputs_full = []
+        #
+        # for epoch in range(start_at_epoch, until_epoch):
+        #     self.current_epoch += 1
+        #     # Print epoch
+        #     print(f'Starting epoch {self.current_epoch}')
+        #
+        #     # Iterate over the DataLoader for training data
+        #     for _, data in enumerate(self.__train_dataloader, 0):
+        #         step += 1
+        #
+        #         # Get inputs
+        #         inputs, targets = data
+        #
+        #         # Zero the gradients
+        #         self.optimizer.zero_grad()
+        #
+        #         # Perform forward pass
+        #         outputs = self.model(inputs)
+        #
+        #         targets_full += [targets]
+        #         outputs_full += [outputs]
+        #
+        #         # Compute loss
+        #         loss = self.loss_fn(outputs, targets)
+        #
+        #         # Perform backward pass
+        #         loss.backward()
+        #
+        #         # Perform optimization
+        #         self.optimizer.step()
+        #
+        #         # print/log train and val
+        #         if self.validate_every_steps and step % self.validate_every_steps == 0:
+        #             outputs_full = torch.cat(outputs_full, dim=0)
+        #             targets_full = torch.cat(targets_full, dim=0)
+        #             self.__calc_metrics_print_save__(outputs_full, targets_full, step, False)
+        #             outputs_full = []
+        #             targets_full = []
+        #             self.__validate__(step)
+        #
+        #     if self.checkpoints_dir:
+        #         self.__save__(osp.join(self.checkpoints_dir, f'checkpoint_{self.current_epoch}.pth'))
+        #
+        # # final eval at end of training
+        # if step % self.validate_every_steps != 0:
+        #     self.__validate__(step, self.__train_dataloader)
+        #     self.__validate__(step, self.__validation_dataloader)
+        #
+        # if self.remove_cp_after_training and self.checkpoints_dir:
+        #     for f in os.listdir(self.checkpoints_dir):
+        #         if f != f'checkpoint_{until_epoch}.pth' and f != 'best.pth':
+        #             os.remove(osp.join(self.checkpoints_dir, f))
+        #
+        # self.__close_writers__()
 
 
     # def __validate__(self, step: int, dataloader: DataLoader = None) -> None:
