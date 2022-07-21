@@ -6,9 +6,9 @@ vision_transforms_factory_ingredient = Ingredient("transformation_factory")
 
 @vision_transforms_factory_ingredient.config
 def cfg():
-    width: None
-    height: None
-    force3Ch: False
+    width = None
+    height = None
+    force_3ch = False
 
 
 @vision_transforms_factory_ingredient.capture
