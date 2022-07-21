@@ -185,7 +185,7 @@ class Trainer:
 
                     running_loss += loss.item()
                     for name, metric in self.__metrics.items():
-                        metric_results[name] += metric(y_hat, y)
+                        metric_results[name] += metric(y_hat, y.int())
 
                     tepoch.set_postfix(metric_results, loss=running_loss)
 
