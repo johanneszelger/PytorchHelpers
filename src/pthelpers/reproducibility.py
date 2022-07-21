@@ -1,5 +1,7 @@
+import os
 import random
 
+import numpy
 import numpy as np
 import torch
 
@@ -16,6 +18,9 @@ class Reproducer:
         :return: A generator and a worker creation function to put into dataloaders
         '''
         torch.use_deterministic_algorithms(True)
+        os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+        os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
+
         torch.manual_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
@@ -23,7 +28,9 @@ class Reproducer:
 
 
         def seed_worker(worker_id):
-            worker_seed = torch.initial_seed() % 2 ** 32
+            worker_seed = torch.initial_seed() % 2**32
+            numpy.random.seed(worker_seed)
+            random.seed(worker_seed)
 
 
         g = torch.Generator()

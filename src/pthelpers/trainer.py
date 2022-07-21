@@ -215,8 +215,6 @@ class Trainer:
                 # Get inputs
                 inputs, targets = data
 
-                inputs, targets = inputs.to(self.device), targets.to(self.device)
-
                 # Zero the gradients
                 self.optimizer.zero_grad()
 
