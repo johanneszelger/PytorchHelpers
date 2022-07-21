@@ -171,15 +171,15 @@ class Trainer:
             for name in self.__metrics.keys():
                 metric_results[name] = 0
             with tqdm(self.__train_dataloader, unit="batch") as tepoch:
-                for i, (inputs, y_hat) in enumerate(tepoch, 0):
+                for i, (inputs, y) in enumerate(tepoch, 0):
                     tepoch.set_description(f"Epoch {epoch}")
 
                     # zero the parameter gradients
                     self.__optimizer.zero_grad()
 
                     # forward + backward + optimize
-                    y = self.__model(inputs)
-                    loss = self.__loss_fn(y, y_hat)
+                    y_hat = self.__model(inputs)
+                    loss = self.__loss_fn(y_hat, y)
                     loss.backward()
                     self.__optimizer.step()
 
