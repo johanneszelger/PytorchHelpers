@@ -185,11 +185,11 @@ class Trainer:
 
                     running_loss += loss.item()
                     for name, metric in self.__metrics.items():
-                        metric_results[name] += metric(y_hat, y.int())
+                        metric_results[name] += metric(y_hat, y.int()).item()
 
                     tepoch.set_postfix(metric_results, loss=running_loss)
 
-                    if _config["log_every_n_batches"] == 0:
+                    if _config["log_every_n_batches"]:
                         batches = (i + 1) + len(self.__train_dataloader) * epoch
                         if batches % _config["log_every_n_batches"]:
                             _run.log_scalar("loss", running_loss / samples_per_batch, batches)
@@ -198,9 +198,10 @@ class Trainer:
                                 _run.log_scalar(name, metric_results[metric] / samples_per_batch, batches)
                                 metric_results[name] = 0
 
-                    if _config["val_every_n_batches"] == 0:
+                    if _config["val_every_n_batches"]:
                         batches = (i + 1) + len(self.__train_dataloader) * epoch
-                        self.validate(self.__val_metrics, self.__validation_dataloader, _run, batches)
+                        if batches % _config["val_every_n_batches"] == 0:
+                            self.validate(self.__val_metrics, self.__validation_dataloader, _run, batches)
 
             if _config["log_every_n_batches"] is None:
                 batches = len(self.__train_dataloader) * (epoch + 1)
