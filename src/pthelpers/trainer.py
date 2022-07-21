@@ -225,7 +225,7 @@ class Trainer:
             y_hat = self.__model(x)
             loss = self.__loss_fn(y_hat, y)
             for metric in metrics.values():
-                metric.update(y_hat, y)
+                metric.update(y_hat, y.int())
 
         run.log_scalar(prefix+"loss", loss / len(dataloader), step)
         for name, metric in metrics.items():
