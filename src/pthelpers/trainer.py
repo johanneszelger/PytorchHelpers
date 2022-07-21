@@ -2,17 +2,10 @@
 import math
 import os
 import os.path as osp
-import shutil
-import time
-from builtins import staticmethod
-from typing import Callable, OrderedDict
 
-import dill
-import numpy as np
 import torch
 from sacred import Ingredient
 from sacred.run import Run
-from torch.nn import Module, BCEWithLogitsLoss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
