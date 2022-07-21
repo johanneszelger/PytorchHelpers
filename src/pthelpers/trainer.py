@@ -9,7 +9,10 @@ from sacred.run import Run
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from src.pthelpers.reproducibility import Reproducer
+try:
+    from pthelpers.reproducibility import Reproducer
+except:
+    from src.pthelpers.reproducibility import Reproducer
 
 trainer_ingredient = Ingredient('trainer')
 
