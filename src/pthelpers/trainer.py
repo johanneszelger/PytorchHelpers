@@ -179,7 +179,7 @@ class Trainer:
 
                     running_loss += loss.item()
 
-                    if _config["log_every_n_batches"]:
+                    if _config["log_every_n_batches"] == 0:
                         batches = (i + 1) + len(self.__train_dataloader) * epoch
                         if batches % _config["log_every_n_batches"]:  # every time the log has been surpassed
                             tepoch.set_postfix(loss=running_loss, )#accuracy=100. * accuracy)
