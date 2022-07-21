@@ -163,13 +163,15 @@ class Trainer:
         for metric in self.__metrics.values():
             metric.to(device)
 
-        samples_per_batch = _config["log_every_n_batches"] * self.__train_dataloader.batch_size
+        if _config["log_every_n_batches"]:
+            samples_per_log = _config["log_every_n_batches"] * self.__train_dataloader.batch_size
         epoch_start = 0
         for epoch in range(epoch_start, _config["epochs"]):
             running_loss = 0.0
             metric_results = {}
             for name in self.__metrics.keys():
                 metric_results[name] = 0
+
             with tqdm(self.__train_dataloader, unit="batch") as tepoch:
                 for i, (inputs, y) in enumerate(tepoch, 0):
                     tepoch.set_description(f"Epoch {epoch}")
@@ -201,35 +203,37 @@ class Trainer:
                     if _config["val_every_n_batches"]:
                         batches = (i + 1) + len(self.__train_dataloader) * epoch
                         if batches % _config["val_every_n_batches"] == 0:
-                            self.validate(self.__val_metrics, self.__validation_dataloader, _run, batches)
+                            self.validate(_run, batches)
 
             if _config["log_every_n_batches"] is None:
                 batches = len(self.__train_dataloader) * (epoch + 1)
-                self.validate(self.__metrics, self.__train_dataloader, _run, batches, "")
+                _run.log_scalar("loss", running_loss / samples_per_batch, batches)
+                for name, metric in self.__metrics.items():
+                    _run.log_scalar(name, metric_results[metric] / samples_per_batch, batches)
 
             if _config["val_every_n_batches"] is None and self.__validation_dataloader:
                 batches = len(self.__train_dataloader) * (epoch + 1)
-                self.validate(self.__val_metrics, self.__validation_dataloader, _run, batches)
+                self.validate(_run, batches)
 
 
         print('Finished Training')
         return
 
     @torch.no_grad()
-    def validate(self, metrics, dataloader, run, step, prefix="val"):
-        for metric in metrics.values():
+    def validate(self, run, step, prefix="val"):
+        for metric in self.__val_metrics.values():
             metric.reset()
 
         loss = 0
-        for x, y in dataloader:
+        for x, y in self.__validation_dataloader:
             y_hat = self.__model(x)
             loss = self.__loss_fn(y_hat, y)
-            for metric in metrics.values():
+            for metric in self.__val_metrics.values():
                 metric.update(y_hat, y.int())
 
         run.log_scalar(prefix+"loss", loss / len(dataloader), step)
-        for name, metric in metrics.items():
-            run.log_scalar(prefix+name, metric.compute() / len(dataloader), step)
+        for name, metric in self.__val_metrics.items():
+            run.log_scalar(prefix+name, metric.compute() / len(self.__validation_dataloader), step)
             metric.reset()
 
         # eval model with random params
