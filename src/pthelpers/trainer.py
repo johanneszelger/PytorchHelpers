@@ -1,5 +1,4 @@
 """ Providing Trainer that automates pthelpers training """
-import math
 import os
 import os.path as osp
 
@@ -23,7 +22,7 @@ def cfg():
     cp_dir = None
     epochs = 1
     use_gpu = True
-    log_every_n_samples = None
+    log_every_n_batches = None
     validate_every_n_samples = None
     ignore_reproducibility = False
 
@@ -162,6 +161,7 @@ class Trainer:
         for metric in self.__metrics.values():
             metric.to(device)
 
+        samples_per_batch = _config["log_every_n_batches"] * self.__train_dataloader.batch_size
         epoch_start = 0
         for epoch in range(epoch_start, _config["epochs"]):
 
@@ -181,14 +181,11 @@ class Trainer:
 
                     running_loss += loss.item()
 
-                    if _config["log_every_n_samples"]:
+                    if _config["log_every_n_batches"]:
                         batches = (i + 1) + len(self.__train_dataloader) * epoch
-                        samples = batches * self.__train_dataloader.batch_size
-                        log_times = math.floor(samples / _config["log_every_n_samples"])
-                        last_log_times = math.floor((samples - self.__train_dataloader.batch_size) / _config["log_every_n_samples"])
-                        if log_times > last_log_times:  # every time the log has been surpassed
+                        if batches % _config["log_every_n_batches"]:  # every time the log has been surpassed
                             tepoch.set_postfix(loss=running_loss, )#accuracy=100. * accuracy)
-                            _run.log_scalar("loss", running_loss / samples, samples)
+                            _run.log_scalar("loss", running_loss / samples_per_batch, batches)
                             running_loss = 0.0
 
         print('Finished Training')
