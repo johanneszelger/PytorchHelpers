@@ -1,7 +1,7 @@
 from sacred import Ingredient
 from torchvision.transforms import transforms
 
-vision_transforms_factory_ingredient = Ingredient("transformation_factory")
+vision_transforms_factory_ingredient = Ingredient("data.transforms_factory")
 
 
 @vision_transforms_factory_ingredient.config
