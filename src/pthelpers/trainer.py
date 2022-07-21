@@ -21,7 +21,6 @@ trainer_ingredient = Ingredient('trainer')
 def cfg():
     cp_dir = None
     epochs = 1
-    start_epoch = 0
     use_gpu = True
     log_every_n_samples = None
     validate_every_n_samples = None
@@ -162,9 +161,8 @@ class Trainer:
         for metric in self.__metrics.values():
             metric.to(device)
 
-        # set parameters
-
-        for epoch in range(_config["start_at_epoch"], _config["epochs"]):
+        epoch_start = 0
+        for epoch in range(epoch_start, _config["epochs"]):
 
             running_loss = 0.0
             for i, data in enumerate(self.__train_dataloader, 0):
