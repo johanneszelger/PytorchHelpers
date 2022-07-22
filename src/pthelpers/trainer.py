@@ -208,7 +208,7 @@ class Trainer:
                             _run.log_scalar("loss", running_loss / samples_per_log, batches * self.__train_dataloader.batch_size)
                             running_loss = 0.0
                             for name, metric in self.__metrics.items():
-                                _run.log_scalar(name, metric_results[name] / samples_per_log, batches * self.__train_dataloader.batch_size)
+                                _run.log_scalar(name, metric_results[name] / _config["log_every_n_batches"], batches * self.__train_dataloader.batch_size)
                                 metric_results[name] = 0
 
                     if _config["val_every_n_batches"]:
@@ -221,7 +221,7 @@ class Trainer:
                 samples = len(self.__train_dataloader) * self.__train_dataloader.batch_size
                 _run.log_scalar("loss", running_loss / samples, batches * self.__train_dataloader.batch_size)
                 for name, metric in self.__metrics.items():
-                    _run.log_scalar(name, metric_results[name] / samples, batches * self.__train_dataloader.batch_size)
+                    _run.log_scalar(name, metric_results[name] / _config["log_every_n_batches"], batches * self.__train_dataloader.batch_size)
 
             if _config["val_every_n_batches"] is None and self.__validation_dataloader:
                 batches = len(self.__train_dataloader) * (self.__epoch__ + 1)
@@ -252,7 +252,7 @@ class Trainer:
         _run.log_scalar(prefix + "loss", loss / len(self.__validation_dataloader), step)
         for name, metric in self.__val_metrics.items():
             _run.log_scalar(prefix + name,
-                            metric.compute().item() / len(self.__validation_dataloader) / self.__validation_dataloader.batch_size, step)
+                            metric.compute().item() / len(self.__validation_dataloader), step)
             metric.reset()
 
         if self.__best_validation_loss__ is None or loss < self.__best_validation_loss__:
