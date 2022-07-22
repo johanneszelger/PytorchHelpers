@@ -11,10 +11,11 @@ class Reproducer:
 
 
     @staticmethod
-    def set_seed(seed: int, deterministic:bool =False):
+    def set_seed(seed: int, deterministic:bool = False):
         '''
         Sets all seeds to make experiments reproducible
         :param seed: seed to set to
+        :param deterministic: sets cuda to exact calculations
         :return: A generator and a worker creation function to put into dataloaders
         '''
 
