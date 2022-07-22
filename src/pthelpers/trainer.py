@@ -146,6 +146,7 @@ class Trainer:
             metric.to(device)
 
         samples_per_log = _config["log_every_n_batches"] * self.__train_dataloader.batch_size if _config["log_every_n_batches"] else 1
+        batch_size = self.__train_dataloader.batch_size
         epoch_start = self.__epoch
         for self.__epoch in range(epoch_start, _config["epochs"]):
             running_loss = 0.0
@@ -173,27 +174,27 @@ class Trainer:
                         metric_results[name] = metric(y_hat, y.int()).item()
                         running_metric_results[name] += metric_results[name]
 
-                    tepoch.set_postfix(metric_results, loss=running_loss)
+                    tepoch.set_postfix(metric_results, loss=loss.item / batch_size)
 
                     if _config["log_every_n_batches"]:
                         batches = (i + 1) + len(self.__train_dataloader) * self.__epoch
                         if batches % _config["log_every_n_batches"] == 0:
-                            _run.log_scalar("loss", running_loss / samples_per_log, batches * self.__train_dataloader.batch_size)
+                            _run.log_scalar("loss", running_loss / samples_per_log, batches * batch_size)
                             running_loss = 0.0
                             for name, metric in self.__metrics.items():
                                 _run.log_scalar(name, running_metric_results[name] / _config["log_every_n_batches"],
-                                                batches * self.__train_dataloader.batch_size)
+                                                batches * batch_size)
                                 running_metric_results[name] = 0
 
                     if _config["val_every_n_batches"]:
                         batches = (i + 1) + len(self.__train_dataloader) * self.__epoch
                         if batches % _config["val_every_n_batches"] == 0:
-                            self.__validate__(step=batches * self.__train_dataloader.batch_size)
+                            self.__validate__(step=batches * batch_size)
 
             if _config["log_every_n_batches"] is None:
                 batches = len(self.__train_dataloader) * (self.__epoch + 1)
-                samples = len(self.__train_dataloader) * self.__train_dataloader.batch_size
-                _run.log_scalar("loss", running_loss / samples, batches * self.__train_dataloader.batch_size)
+                samples = len(self.__train_dataloader) * batch_size
+                _run.log_scalar("loss", running_loss / samples, batches * batch_size)
                 for name, metric in self.__metrics.items():
                     _run.log_scalar(name, running_metric_results[name] / _config["log_every_n_batches"],
                                     batches * self.__train_dataloader.batch_size)
