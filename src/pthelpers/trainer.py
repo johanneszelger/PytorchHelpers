@@ -174,7 +174,7 @@ class Trainer:
                         metric_results[name] = metric(y_hat, y.int()).item()
                         running_metric_results[name] += metric_results[name]
 
-                    tepoch.set_postfix(metric_results, loss=loss.item / batch_size)
+                    tepoch.set_postfix(metric_results, loss=loss.item() / batch_size)
 
                     if _config["log_every_n_batches"]:
                         batches = (i + 1) + len(self.__train_dataloader) * self.__epoch
