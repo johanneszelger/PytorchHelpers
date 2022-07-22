@@ -194,7 +194,7 @@ class Trainer:
 
                     if _config["log_every_n_batches"]:
                         batches = (i + 1) + len(self.__train_dataloader) * epoch
-                        if batches % _config["log_every_n_batches"]:
+                        if batches % _config["log_every_n_batches"] == 0:
                             _run.log_scalar("loss", running_loss / samples_per_log, batches)
                             running_loss = 0.0
                             for name, metric in self.__metrics.items():
