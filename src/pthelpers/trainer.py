@@ -210,7 +210,7 @@ class Trainer:
 
     @trainer_ingredient.capture
     @torch.no_grad()
-    def __validate__(self, _run, _log, step=None, prefix="val"):
+    def __validate__(self, _run, _log, step=None, prefix="val_"):
         if not step:
             raise ValueError("step is required for validation")
 
