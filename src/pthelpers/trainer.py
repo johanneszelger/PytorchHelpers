@@ -39,15 +39,20 @@ class Trainer:
     """
 
 
-    # @trainer_ingredient.capture()
-    # def load_latest_existing(self, cp_dir: str):
-    #     if not osp.exists(cp_dir):
-    #         return None
-    #     epochs = [x.replace("checkpoint_", "").replace(".pth", "") for x in os.listdir(cp_dir) if not x.startswith("best")]
-    #     if len(epochs) == 0:
-    #         return None
-    #     last_epoch = max(epochs)
-    #     return self.load(osp.join(cp_dir, f"checkpoint_{last_epoch}.pth"))
+    @trainer_ingredient.capture()
+    def __load_existing_cp__(self, _log) -> None:
+        cp_dir = self.__get_final_cp_dir__()
+        if not osp.exists(cp_dir):
+            return None
+
+        epochs = [x.replace("checkpoint_", "").replace(".pth", "") for x in os.listdir(cp_dir) if not x.startswith("best")]
+        if len(epochs) == 0:
+            return None
+        last_epoch = max(epochs)
+
+        _log.info(f'Found existing checkpoint: checkpoint_{last_epoch}.pth in {cp_dir}')
+        self.load(osp.join(cp_dir, f"checkpoint_{last_epoch}.pth"))
+
 
     def __init__(self,
                  model: torch.nn.Module = None,
@@ -109,45 +114,8 @@ class Trainer:
         self.__metrics = metrics
         self.__val_metrics = copy.deepcopy(metrics)
 
-        self.__best_validation_loss__ = None
-        self.__epoch__ = None
-
-
-        # self.device = "cuda" if torch.cuda.is_available() and use_gpu else "cpu"
-        # for metric in self.metrics.values():
-        #     metric.to(self.device)
-        # self.checkpoints_dir = checkpoints_dir
-        # self.log_dir = log_dir
-        # self.__validation_dataloader = validation_dataloader
-        # self.validate_every_steps = validate_every_steps
-        # self.remove_cp_after_training = remove_cp_after_training
-        # self.eval_first = eval_first
-        # self.class_names = class_names
-        # self.__use_gpu = use_gpu
-
-        # self.writer_train = None
-        # self.writer_val = None
-
-        # self.__best_validation_loss__ = None
-        # self.__current_loss__ = None
-        #
-        # if self.checkpoints_dir and not osp.exists(self.checkpoints_dir):
-        #     os.makedirs(self.checkpoints_dir)
-        #
-        # if self.log_dir and osp.exists(self.log_dir) and len(os.listdir(self.log_dir)) > 0:
-        #     delete = input(f"Log directory not empty ({self.log_dir}), should it be emptied? (N)?")
-        #     if delete == 'Y' or delete == 'y' or delete == 'yes' or delete == 'Yes':
-        #         shutil.rmtree(self.log_dir)
-        #
-        # if self.log_dir and not osp.exists(self.log_dir):
-        #     os.makedirs(self.log_dir)
-        #
-        # self.current_epoch = 0
-        #
-        # if load_latest_existing:
-        #     if not checkpoints_dir:
-        #         raise ValueError("If latest existing checkpoint should be loaded, please specify checkpoints_dir")
-        #     self.load_latest_existing(checkpoints_dir)
+        self.__best_validation_loss = None
+        self.__epoch = 0
 
 
     @trainer_ingredient.capture()
@@ -158,6 +126,8 @@ class Trainer:
         :param _config: sacred experiment config
         :return: None
         """
+
+        self.__load_existing_cp__()
 
         _log.info(f'Starting training')
         if not Reproducer.seed_set and not _config["ignore_reproducibility"]:
@@ -176,16 +146,16 @@ class Trainer:
             metric.to(device)
 
         samples_per_log = _config["log_every_n_batches"] * self.__train_dataloader.batch_size if _config["log_every_n_batches"] else 1
-        epoch_start = 0
-        for self.__epoch__ in range(epoch_start, _config["epochs"]):
+        epoch_start = self.__epoch
+        for self.__epoch in range(epoch_start, _config["epochs"]):
             running_loss = 0.0
-            metric_results = {}
+            running_metric_results = {}
             for name in self.__metrics.keys():
-                metric_results[name] = 0
+                running_metric_results[name] = 0
 
             with tqdm(self.__train_dataloader, unit="batch") as tepoch:
                 for i, (inputs, y) in enumerate(tepoch, 0):
-                    tepoch.set_description(f"Epoch {self.__epoch__}")
+                    tepoch.set_description(f"Epoch {self.__epoch}")
 
                     # zero the parameter gradients
                     self.__optimizer.zero_grad()
@@ -197,37 +167,42 @@ class Trainer:
                     self.__optimizer.step()
 
                     running_loss += loss.item()
+
+                    metric_results = {}
                     for name, metric in self.__metrics.items():
-                        metric_results[name] += metric(y_hat, y.int()).item()
+                        metric_results[name] = metric(y_hat, y.int()).item()
+                        running_metric_results[name] += metric_results[name]
 
                     tepoch.set_postfix(metric_results, loss=running_loss)
 
                     if _config["log_every_n_batches"]:
-                        batches = (i + 1) + len(self.__train_dataloader) * self.__epoch__
+                        batches = (i + 1) + len(self.__train_dataloader) * self.__epoch
                         if batches % _config["log_every_n_batches"] == 0:
                             _run.log_scalar("loss", running_loss / samples_per_log, batches * self.__train_dataloader.batch_size)
                             running_loss = 0.0
                             for name, metric in self.__metrics.items():
-                                _run.log_scalar(name, metric_results[name] / _config["log_every_n_batches"], batches * self.__train_dataloader.batch_size)
-                                metric_results[name] = 0
+                                _run.log_scalar(name, running_metric_results[name] / _config["log_every_n_batches"],
+                                                batches * self.__train_dataloader.batch_size)
+                                running_metric_results[name] = 0
 
                     if _config["val_every_n_batches"]:
-                        batches = (i + 1) + len(self.__train_dataloader) * self.__epoch__
+                        batches = (i + 1) + len(self.__train_dataloader) * self.__epoch
                         if batches % _config["val_every_n_batches"] == 0:
                             self.__validate__(step=batches * self.__train_dataloader.batch_size)
 
             if _config["log_every_n_batches"] is None:
-                batches = len(self.__train_dataloader) * (self.__epoch__ + 1)
+                batches = len(self.__train_dataloader) * (self.__epoch + 1)
                 samples = len(self.__train_dataloader) * self.__train_dataloader.batch_size
                 _run.log_scalar("loss", running_loss / samples, batches * self.__train_dataloader.batch_size)
                 for name, metric in self.__metrics.items():
-                    _run.log_scalar(name, metric_results[name] / _config["log_every_n_batches"], batches * self.__train_dataloader.batch_size)
+                    _run.log_scalar(name, running_metric_results[name] / _config["log_every_n_batches"],
+                                    batches * self.__train_dataloader.batch_size)
 
             if _config["val_every_n_batches"] is None and self.__validation_dataloader:
-                batches = len(self.__train_dataloader) * (self.__epoch__ + 1)
+                batches = len(self.__train_dataloader) * (self.__epoch + 1)
                 self.__validate__(step=batches * self.__train_dataloader.batch_size)
 
-            self.__save__(name=f'checkpoint_{self.__epoch__}.pth')
+            self.__save__(name=f'checkpoint_{self.__epoch}.pth')
 
         _log.info('Finished Training')
         return
@@ -251,13 +226,12 @@ class Trainer:
 
         _run.log_scalar(prefix + "loss", loss / len(self.__validation_dataloader), step)
         for name, metric in self.__val_metrics.items():
-            _run.log_scalar(prefix + name,
-                            metric.compute().item() / len(self.__validation_dataloader), step)
+            _run.log_scalar(prefix + name, metric.compute().item() / len(self.__validation_dataloader), step)
             metric.reset()
 
-        if self.__best_validation_loss__ is None or loss < self.__best_validation_loss__:
-            _log.info(f'found new best validation loss, {self.__best_validation_loss__} vs. {loss}')
-            self.__best_validation_loss__ = loss
+        if self.__best_validation_loss is None or loss < self.__best_validation_loss:
+            _log.info(f'found new best validation loss, {self.__best_validation_loss} vs. {loss}')
+            self.__best_validation_loss = loss
             self.__save__(name='best.pth', loss=loss)
 
 
@@ -291,38 +265,41 @@ class Trainer:
 
 
     @trainer_ingredient.capture
-    def __save__(self, _log, _run, cp_dir, cp_dir_append_experiment, cp_dir_append_run, loss: float = None, name: str = None):
-        if not name:
-            raise ValueError('Name is required')
-
+    def __get_final_cp_dir__(self, _run, cp_dir, cp_dir_append_experiment, cp_dir_append_run):
         if cp_dir_append_experiment:
             cp_dir = osp.join(cp_dir, _run.experiment_info['name'])
         if cp_dir_append_run:
             cp_dir = osp.join(cp_dir, str(_run._id))
         os.makedirs(cp_dir, exist_ok=True)
-        cp_dir = osp.join(cp_dir, name)
 
+
+    @trainer_ingredient.capture
+    def __save__(self, _log, _run, loss: float = None, name: str = None):
+        if not name:
+            raise ValueError('Name is required')
+
+        cp_dir = self.__get_final_cp_dir__()
+        cp_dir = osp.join(cp_dir, name)
 
         _log.info(f'Saving checkpoint: {cp_dir}')
 
-        torch.save({'epoch': self.__epoch__,
+        torch.save({'epoch': self.__epoch,
                     'state_dict': self.__model.state_dict(),
                     'optimizer': self.__optimizer.state_dict(),
-                    'best_loss': self.__best_validation_loss__,
+                    'best_loss': self.__best_validation_loss,
                     'current_loss': loss,
                     },
                    cp_dir, pickle_module=dill)
 
 
-    # def load(self, dir: str):
-    #     checkpoint = torch.load(dir)
-    #     self.current_epoch = checkpoint['epoch']
-    #     self.model.load_state_dict(checkpoint['state_dict'])
-    #     self.optimizer.load_state_dict(checkpoint['optimizer'])
-    #     self.__best_validation_loss__ = checkpoint['best_loss']
-    #     self.__current_loss__ = checkpoint['current_loss']
-    #
-    #
+    def load(self, cp_dir: str) -> None:
+        checkpoint = torch.load(cp_dir)
+        self.__epoch = checkpoint['epoch']
+        self.__model.load_state_dict(checkpoint['state_dict'])
+        self.__optimizer.load_state_dict(checkpoint['optimizer'])
+        self.__best_validation_loss = checkpoint['best_loss']
+
+
     # @staticmethod
     # def load_model_weights(model: Module, cp_path: str):
     #     checkpoint = torch.load(cp_path)
