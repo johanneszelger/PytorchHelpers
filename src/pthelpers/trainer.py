@@ -298,7 +298,7 @@ class Trainer:
         if cp_dir_append_experiment:
             cp_dir = osp.join(cp_dir, _run.experiment_info['name'])
         if cp_dir_append_run:
-            cp_dir = osp.join(cp_dir, _run._id)
+            cp_dir = osp.join(cp_dir, str(_run._id))
         os.makedirs(cp_dir, exist_ok=True)
         cp_dir = osp.join(cp_dir, name)
 
