@@ -165,8 +165,7 @@ class Trainer:
         for metric in self.__val_metrics.values():
             metric.to(device)
 
-        if _config["log_every_n_batches"]:
-            samples_per_log = _config["log_every_n_batches"] * self.__train_dataloader.batch_size
+        samples_per_log = _config["log_every_n_batches"] * self.__train_dataloader.batch_size if _config["log_every_n_batches"] else 1
         epoch_start = 0
         for epoch in range(epoch_start, _config["epochs"]):
             running_loss = 0.0
@@ -199,7 +198,7 @@ class Trainer:
                             _run.log_scalar("loss", running_loss / samples_per_log, batches)
                             running_loss = 0.0
                             for name, metric in self.__metrics.items():
-                                _run.log_scalar(name, metric_results[metric] / samples_per_log, batches)
+                                _run.log_scalar(name, metric_results[name] / samples_per_log, batches)
                                 metric_results[name] = 0
 
                     if _config["val_every_n_batches"]:
@@ -218,9 +217,9 @@ class Trainer:
                 batches = len(self.__train_dataloader) * (epoch + 1)
                 self.validate(_run, batches)
 
-
         print('Finished Training')
         return
+
 
     @torch.no_grad()
     def validate(self, run, step, prefix="val"):
@@ -234,9 +233,10 @@ class Trainer:
             for metric in self.__val_metrics.values():
                 metric.update(y_hat, y.int())
 
-        run.log_scalar(prefix+"loss", loss / len(self.__validation_dataloader), step)
+        run.log_scalar(prefix + "loss", loss / len(self.__validation_dataloader), step)
         for name, metric in self.__val_metrics.items():
-            run.log_scalar(prefix+name, metric.compute().item() / len(self.__validation_dataloader) / self.__validation_dataloader.batch_size, step)
+            run.log_scalar(prefix + name,
+                           metric.compute().item() / len(self.__validation_dataloader) / self.__validation_dataloader.batch_size, step)
             metric.reset()
 
         # eval model with random params
