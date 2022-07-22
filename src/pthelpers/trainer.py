@@ -272,6 +272,8 @@ class Trainer:
             cp_dir = osp.join(cp_dir, str(_run._id))
         os.makedirs(cp_dir, exist_ok=True)
 
+        return cp_dir
+
 
     @trainer_ingredient.capture
     def __save__(self, _log, _run, loss: float = None, name: str = None):
