@@ -1,6 +1,8 @@
 """ Providing Trainer that automates pthelpers training """
 import copy
+import os.path as osp
 
+import dill
 import torch
 from sacred import Ingredient
 from sacred.run import Run
@@ -20,6 +22,8 @@ trainer_ingredient = Ingredient('trainer')
 @trainer_ingredient.config
 def cfg():
     cp_dir = None
+    cp_dir_append_experiment = False
+    cp_dir_append_run = True
     epochs = 1
     use_gpu = True
     log_every_n_batches = None
@@ -104,6 +108,9 @@ class Trainer:
         self.__metrics = metrics
         self.__val_metrics = copy.deepcopy(metrics)
 
+        self.__best_validation_loss__ = None
+        self.__epoch__ = None
+
 
         # self.device = "cuda" if torch.cuda.is_available() and use_gpu else "cpu"
         # for metric in self.metrics.values():
@@ -143,13 +150,15 @@ class Trainer:
 
 
     @trainer_ingredient.capture()
-    def train(self, _run: Run, _config) -> None:
+    def train(self, _log, _run: Run, _config) -> None:
         """
         starts the training of the model
         :param _run: sacred experiment run
         :param _config: sacred experiment config
         :return: None
         """
+
+        _log.info(f'Starting training')
         if not Reproducer.seed_set and not _config["ignore_reproducibility"]:
             raise ValueError("Seeds not set, please use Reproducer.set_seed() to do so or set ignore_reproducibility "
                              "to True in config")
@@ -167,7 +176,7 @@ class Trainer:
 
         samples_per_log = _config["log_every_n_batches"] * self.__train_dataloader.batch_size if _config["log_every_n_batches"] else 1
         epoch_start = 0
-        for epoch in range(epoch_start, _config["epochs"]):
+        for self.__epoch__ in range(epoch_start, _config["epochs"]):
             running_loss = 0.0
             metric_results = {}
             for name in self.__metrics.keys():
@@ -175,7 +184,7 @@ class Trainer:
 
             with tqdm(self.__train_dataloader, unit="batch") as tepoch:
                 for i, (inputs, y) in enumerate(tepoch, 0):
-                    tepoch.set_description(f"Epoch {epoch}")
+                    tepoch.set_description(f"Epoch {self.__epoch__}")
 
                     # zero the parameter gradients
                     self.__optimizer.zero_grad()
@@ -193,7 +202,7 @@ class Trainer:
                     tepoch.set_postfix(metric_results, loss=running_loss)
 
                     if _config["log_every_n_batches"]:
-                        batches = (i + 1) + len(self.__train_dataloader) * epoch
+                        batches = (i + 1) + len(self.__train_dataloader) * self.__epoch__
                         if batches % _config["log_every_n_batches"] == 0:
                             _run.log_scalar("loss", running_loss / samples_per_log, batches)
                             running_loss = 0.0
@@ -202,27 +211,33 @@ class Trainer:
                                 metric_results[name] = 0
 
                     if _config["val_every_n_batches"]:
-                        batches = (i + 1) + len(self.__train_dataloader) * epoch
+                        batches = (i + 1) + len(self.__train_dataloader) * self.__epoch__
                         if batches % _config["val_every_n_batches"] == 0:
-                            self.validate(_run, batches)
+                            self.__validate__(batches)
 
             if _config["log_every_n_batches"] is None:
-                batches = len(self.__train_dataloader) * (epoch + 1)
+                batches = len(self.__train_dataloader) * (self.__epoch__ + 1)
                 samples = len(self.__train_dataloader) * self.__train_dataloader.batch_size
                 _run.log_scalar("loss", running_loss / samples, batches)
                 for name, metric in self.__metrics.items():
                     _run.log_scalar(name, metric_results[name] / samples, batches)
 
             if _config["val_every_n_batches"] is None and self.__validation_dataloader:
-                batches = len(self.__train_dataloader) * (epoch + 1)
-                self.validate(_run, batches)
+                batches = len(self.__train_dataloader) * (self.__epoch__ + 1)
+                self.__validate__(batches)
 
-        print('Finished Training')
+            self.__save__(name=f'checkpoint_{self.__epoch__}.pth')
+
+        _log.info('Finished Training')
         return
 
 
+    @trainer_ingredient.capture
     @torch.no_grad()
-    def validate(self, run, step, prefix="val"):
+    def __validate__(self, _run, _log, step=None, prefix="val"):
+        if not step:
+            raise ValueError("step is required for validation")
+
         for metric in self.__val_metrics.values():
             metric.reset()
 
@@ -233,136 +248,18 @@ class Trainer:
             for metric in self.__val_metrics.values():
                 metric.update(y_hat, y.int())
 
-        run.log_scalar(prefix + "loss", loss / len(self.__validation_dataloader), step)
+        _run.log_scalar(prefix + "loss", loss / len(self.__validation_dataloader), step)
         for name, metric in self.__val_metrics.items():
-            run.log_scalar(prefix + name,
-                           metric.compute().item() / len(self.__validation_dataloader) / self.__validation_dataloader.batch_size, step)
+            _run.log_scalar(prefix + name,
+                            metric.compute().item() / len(self.__validation_dataloader) / self.__validation_dataloader.batch_size, step)
             metric.reset()
 
-        # eval model with random params
-        # if start_at_epoch == 0 and self.eval_first:
-        #     print("doing evaluation before training")
-        #     self.__validate__(0, self.__train_dataloader)
-        #     self.__validate__(0, self.__validation_dataloader)
-        #
-        # step = start_at_epoch * len(self.__train_dataloader)
-        #
-        # # keep track of results
-        # targets_full = []
-        # outputs_full = []
-        #
-        # for epoch in range(start_at_epoch, until_epoch):
-        #     self.current_epoch += 1
-        #     # Print epoch
-        #     print(f'Starting epoch {self.current_epoch}')
-        #
-        #     # Iterate over the DataLoader for training data
-        #     for _, data in enumerate(self.__train_dataloader, 0):
-        #         step += 1
-        #
-        #         # Get inputs
-        #         inputs, targets = data
-        #
-        #         # Zero the gradients
-        #         self.optimizer.zero_grad()
-        #
-        #         # Perform forward pass
-        #         outputs = self.model(inputs)
-        #
-        #         targets_full += [targets]
-        #         outputs_full += [outputs]
-        #
-        #         # Compute loss
-        #         loss = self.loss_fn(outputs, targets)
-        #
-        #         # Perform backward pass
-        #         loss.backward()
-        #
-        #         # Perform optimization
-        #         self.optimizer.step()
-        #
-        #         # print/log train and val
-        #         if self.validate_every_steps and step % self.validate_every_steps == 0:
-        #             outputs_full = torch.cat(outputs_full, dim=0)
-        #             targets_full = torch.cat(targets_full, dim=0)
-        #             self.__calc_metrics_print_save__(outputs_full, targets_full, step, False)
-        #             outputs_full = []
-        #             targets_full = []
-        #             self.__validate__(step)
-        #
-        #     if self.checkpoints_dir:
-        #         self.__save__(osp.join(self.checkpoints_dir, f'checkpoint_{self.current_epoch}.pth'))
-        #
-        # # final eval at end of training
-        # if step % self.validate_every_steps != 0:
-        #     self.__validate__(step, self.__train_dataloader)
-        #     self.__validate__(step, self.__validation_dataloader)
-        #
-        # if self.remove_cp_after_training and self.checkpoints_dir:
-        #     for f in os.listdir(self.checkpoints_dir):
-        #         if f != f'checkpoint_{until_epoch}.pth' and f != 'best.pth':
-        #             os.remove(osp.join(self.checkpoints_dir, f))
-        #
-        # self.__close_writers__()
+        if self.__best_validation_loss__ is None or loss < self.__best_validation_loss__:
+            _log.info(f'found new best validation loss, {self.__best_validation_loss__} vs. {loss}')
+            self.__best_validation_loss__ = loss
+            self.__save__(name='best.pth', loss=loss)
 
 
-    # def __validate__(self, step: int, dataloader: DataLoader = None) -> None:
-    #     if dataloader is None:
-    #         dataloader = self.__validation_dataloader
-    #
-    #     if dataloader is None:
-    #         return
-    #
-    #     gt, pred = Trainer.test(dataloader, model=self.model, use_gpu=self.__use_gpu)
-    #
-    #     self.model.train()
-    #
-    #     self.__calc_metrics_print_save__(pred, gt, step,
-    #                                      dataloader == self.__validation_dataloader)
-    #
-    #
-    # def __calc_metrics_print_save__(self, predictions: torch.Tensor, targets: torch.Tensor, step: int,
-    #                                 validation: bool) -> None:
-    #     class_names = self.class_names if self.class_names is not None \
-    #         else [str(x) for x in np.arange(1, predictions.shape[1] + 1, 1)]
-    #
-    #     with torch.no_grad():
-    #         loss = self.loss_fn(predictions, targets).item()  # / divider
-    #         if not validation:
-    #             self.__current_loss__ = loss
-    #
-    #         writer = self.writer_val if validation else self.writer_train
-    #
-    #         if writer:
-    #             writer.add_scalar('Loss', loss, step, time.time())
-    #             if not validation:
-    #                 writer.add_scalar('LR', self.optimizer.param_groups[0]['lr'], step, time.time())
-    #         print(f'{"val_" if validation else "train_"}loss %5d: %.3f' % (step, loss))
-    #
-    #         if self.metrics:
-    #             for metric_name, metric in self.metrics.items():
-    #                 value = metric(predictions, targets.int())  # / divider
-    #                 if isinstance(value, int) or value.dim() == 0:
-    #                     if writer:
-    #                         writer.add_scalar(f'{metric_name}', value, step, time.time())
-    #                     print(f'{"val_" if validation else "train_"}{metric_name} %5d: %.3f' % (step, value))
-    #                 else:
-    #                     for x in zip(class_names, value):
-    #                         if writer:
-    #                             writer.add_scalar(f'{metric_name} {x[0]}', x[1], step, time.time())
-    #                         print(f'{"val_" if validation else "train_"}{metric_name} {x[0]} %5d: %s' % (step, x[1]))
-    #
-    #         # add PR curves
-    #         if validation and writer:
-    #             gt = np.eye(predictions.cpu().shape[1], dtype='uint8')[targets.cpu()] if targets.dim() == 1 \
-    #                 else targets
-    #             for i, c in enumerate(class_names):
-    #                 writer.add_pr_curve(f'{c} PR', gt[:, i], predictions[:, i], step)
-    #
-    #         if self.checkpoints_dir and validation and step > 0 and \
-    #                 (self.__best_validation_loss__ is None or loss < self.__best_validation_loss__):
-    #             self.__best_validation_loss__ = loss
-    #             self.__save__(osp.join(self.checkpoints_dir, 'best.pth'))
     #
     #
     # @staticmethod
@@ -390,18 +287,30 @@ class Trainer:
     #             pred = torch.cat((pred, out), 0)
     #
     #     return gt, pred
-    #
-    #
-    # def __save__(self, dir: str):
-    #     torch.save({'epoch': self.current_epoch,
-    #                 'state_dict': self.model.state_dict(),
-    #                 'optimizer': self.optimizer.state_dict(),
-    #                 'best_loss': self.__best_validation_loss__,
-    #                 'current_loss': self.__current_loss__,
-    #                 },
-    #                dir, pickle_module=dill)
-    #
-    #
+
+
+    @trainer_ingredient.capture
+    def __save__(self, _log, _run, cp_dir, cp_dir_append_experiment, cp_dir_append_run, loss: float = None, name: str = None):
+        if not name:
+            raise ValueError('Name is required')
+
+        if cp_dir_append_experiment:
+            cp_dir = osp.join(cp_dir, _run.experiment_info['name'])
+        if cp_dir_append_experiment:
+            cp_dir = osp.join(cp_dir, _run._id)
+        cp_dir = osp.join(cp_dir, name)
+
+        _log.info(f'Saving checkpoint: {cp_dir}')
+
+        torch.save({'epoch': self.__epoch__,
+                    'state_dict': self.__model.state_dict(),
+                    'optimizer': self.__optimizer.state_dict(),
+                    'best_loss': self.__best_validation_loss__,
+                    'current_loss': loss,
+                    },
+                   cp_dir, pickle_module=dill)
+
+
     # def load(self, dir: str):
     #     checkpoint = torch.load(dir)
     #     self.current_epoch = checkpoint['epoch']
