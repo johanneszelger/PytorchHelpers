@@ -299,8 +299,9 @@ class Trainer:
             cp_dir = osp.join(cp_dir, _run.experiment_info['name'])
         if cp_dir_append_experiment:
             cp_dir = osp.join(cp_dir, _run._id)
-        cp_dir = osp.join(cp_dir, name)
         os.makedirs(cp_dir)
+        cp_dir = osp.join(cp_dir, name)
+
 
         _log.info(f'Saving checkpoint: {cp_dir}')
 
