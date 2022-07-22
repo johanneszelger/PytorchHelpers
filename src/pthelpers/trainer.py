@@ -204,27 +204,27 @@ class Trainer:
                     if _config["log_every_n_batches"]:
                         batches = (i + 1) + len(self.__train_dataloader) * self.__epoch__
                         if batches % _config["log_every_n_batches"] == 0:
-                            _run.log_scalar("loss", running_loss / samples_per_log, batches)
+                            _run.log_scalar("loss", running_loss / samples_per_log, batches * self.__train_dataloader.batch_size)
                             running_loss = 0.0
                             for name, metric in self.__metrics.items():
-                                _run.log_scalar(name, metric_results[name] / samples_per_log, batches)
+                                _run.log_scalar(name, metric_results[name] / samples_per_log, batches * self.__train_dataloader.batch_size)
                                 metric_results[name] = 0
 
                     if _config["val_every_n_batches"]:
                         batches = (i + 1) + len(self.__train_dataloader) * self.__epoch__
                         if batches % _config["val_every_n_batches"] == 0:
-                            self.__validate__(batches)
+                            self.__validate__(step=batches * self.__train_dataloader.batch_size)
 
             if _config["log_every_n_batches"] is None:
                 batches = len(self.__train_dataloader) * (self.__epoch__ + 1)
                 samples = len(self.__train_dataloader) * self.__train_dataloader.batch_size
-                _run.log_scalar("loss", running_loss / samples, batches)
+                _run.log_scalar("loss", running_loss / samples, batches * self.__train_dataloader.batch_size)
                 for name, metric in self.__metrics.items():
-                    _run.log_scalar(name, metric_results[name] / samples, batches)
+                    _run.log_scalar(name, metric_results[name] / samples, batches * self.__train_dataloader.batch_size)
 
             if _config["val_every_n_batches"] is None and self.__validation_dataloader:
                 batches = len(self.__train_dataloader) * (self.__epoch__ + 1)
-                self.__validate__(batches)
+                self.__validate__(step=batches * self.__train_dataloader.batch_size)
 
             self.__save__(name=f'checkpoint_{self.__epoch__}.pth')
 
