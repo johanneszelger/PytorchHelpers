@@ -300,9 +300,9 @@ class Trainer:
         if cp_dir_append_experiment:
             cp_dir = osp.join(cp_dir, _run._id)
         cp_dir = osp.join(cp_dir, name)
+        os.makedirs(cp_dir)
 
         _log.info(f'Saving checkpoint: {cp_dir}')
-        os.makedirs(cp_dir)
 
         torch.save({'epoch': self.__epoch__,
                     'state_dict': self.__model.state_dict(),
