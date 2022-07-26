@@ -57,12 +57,13 @@ def generate_train_transforms(_config):
 @vision_transforms_factory_ingredient.capture
 def generate_test_transforms(_config):
     trafos = []
-    if _config["width"] and _config["height"]:
-        trafos.append(transforms.Resize((_config["width"], _config["height"])))
+
+    if "resize" in _config and _config["resize"]:
+        trafos.append(transforms.Resize((_config["resize"]["width"], _config["resize"]["height"])))
 
     trafos.append(transforms.ToTensor())
 
-    if _config["force_3ch"]:
+    if "force_3ch" in _config and _config["force_3ch"]:
         trafos.append(transforms.Lambda(lambda x: x.repeat(3, 1, 1) if x.shape[0] == 1 else x))
 
     return transforms.Compose(trafos)
