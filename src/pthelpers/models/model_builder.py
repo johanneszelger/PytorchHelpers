@@ -12,7 +12,7 @@ def build_model(_log, model_name):
 
 @model_builder_ingredient.capture(prefix='densenet')
 def build_densenet(_log, growth_rate, block_config, num_init_features, bn_size, drop_rate, memory_efficient, num_classes):
-    densenet = DenseNet(growth_rate, block_config, num_init_features, bn_size, drop_rate, 1, memory_efficient, num_classes=num_classes)
+    densenet = DenseNet(growth_rate, block_config, num_init_features, bn_size, drop_rate, num_classes, memory_efficient)
 
     return nn.Sequential(
         densenet,
