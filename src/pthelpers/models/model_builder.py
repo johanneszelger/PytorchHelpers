@@ -3,7 +3,6 @@ from torch import nn
 from torchvision.models import DenseNet, densenet121
 
 model_builder_ingredient = Ingredient('model')
-model_builder_ingredient.config()
 
 @model_builder_ingredient.capture()
 def build_model(_log, model_name):
