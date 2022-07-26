@@ -3,14 +3,23 @@ import os.path as osp
 import shutil
 import time
 import unittest
+from unittest.mock import MagicMock
 
 import torch.optim
 import torchvision.models
+from sacred import Experiment
 from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor
+from unittest import mock
 
 from src.pthelpers.models.simple_net import Net
-from src.pthelpers.trainer import Trainer
+from src.pthelpers.reproducibility import Reproducer
+from src.pthelpers.trainer import Trainer, trainer_ingredient
+
+
+def optionHook(options):
+    options['--debug'] = True
+    options['--pdb'] = True
 
 
 class TrainerTest(unittest.TestCase):
@@ -18,8 +27,8 @@ class TrainerTest(unittest.TestCase):
         self.model = Net()
 
         self.data, _ = torch.utils.data.random_split(
-            torchvision.datasets.MNIST("./data/", download=True, transform=ToTensor()),
-            [4096, 60000 - 4096])
+                torchvision.datasets.MNIST("./data/", download=True, transform=ToTensor()),
+                [4096, 60000 - 4096])
         self.test_data = torchvision.datasets.MNIST("./data/", train=False, transform=ToTensor())
 
         self.dataloader = DataLoader(self.data, batch_size=1024, shuffle=True)
@@ -33,16 +42,14 @@ class TrainerTest(unittest.TestCase):
             shutil.rmtree(self.cp_dir)
         os.makedirs(self.cp_dir)
 
-        self.log_dir = 'logs'
-        if osp.exists(self.log_dir):
-            shutil.rmtree(self.log_dir)
-        os.makedirs(self.log_dir)
+        self.experiment = Experiment(ingredients=[trainer_ingredient])
+        self.experiment.option_hook(optionHook)
+        trainer_ingredient.add_config({"use_gpu": False, "ignore_reproducibility": True})
 
 
     def tearDown(self) -> None:
         time.sleep(0.3)
-        shutil.rmtree(self.cp_dir)
-        shutil.rmtree(self.log_dir)
+        shutil.rmtree(self.cp_dir, ignore_errors=True)
 
 
     def test_init(self):
@@ -50,218 +57,137 @@ class TrainerTest(unittest.TestCase):
         self.assertIsNotNone(trainer)
 
 
-    # def test_train(self):
-    #     self.optimizer.step = MagicMock(return_value=None)
-    #     trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer)
-    #     trainer.train(1)
-    #     self.optimizer.step.assert_called()
-    #
-    #
-    # def test_logging(self):
-    #     with mock.patch('builtins.input', return_value="no"):
-    #         trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer,
-    #                           log_dir=self.log_dir, validate_every_steps=4, use_gpu=False)
-    #         with mock.patch.object(SummaryWriter, 'add_scalar') as writer:
-    #             trainer.train(1)
-    #             # LR and Loss, vloss after 4 steps
-    #             self.assertEqual(3, writer.call_count)
-    #             self.assertEqual(2, len(os.listdir(self.log_dir)))
-    #             self.assertEqual(1, len(os.listdir(osp.join(self.log_dir, "train"))))
-    #
-    #         trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer, use_gpu=False,
-    #                           log_dir=self.log_dir, validate_every_steps=3)
-    #         with mock.patch.object(SummaryWriter, 'add_scalar') as writer:
-    #             trainer.train(1)
-    #             # after 3 steps (loss, lr, vloss) and once at end of epoch
-    #             self.assertEqual(3 + 3, writer.call_count)
-    #             self.assertEqual(2, len(os.listdir(self.log_dir)))
-    #             # now two files, one of the first run, one of the second run!
-    #             self.assertEqual(2, len(os.listdir(osp.join(self.log_dir, "train"))))
-    #
-    #     with mock.patch('builtins.input', return_value="yes"):
-    #         trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer,
-    #                           log_dir=self.log_dir, validate_every_steps=3, use_gpu=False)
-    #         trainer.train(1)
-    #         trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer, use_gpu=False,
-    #                           log_dir=self.log_dir, validate_every_steps=3)
-    #         trainer.train(1)
-    #         # now only one file, as the first run gets deleted, one of the second run!
-    #         self.assertEqual(1, len(os.listdir(osp.join(self.log_dir, "train"))))
-    #
-    #
-    # def test_evaluate_every(self):
-    #     with mock.patch('builtins.input', return_value="no"):
-    #         trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer,
-    #                           validate_every_steps=1,
-    #                           log_dir=self.log_dir, checkpoints_dir=self.cp_dir)
-    #         trainer.__validate__ = MagicMock(return_value=None)
-    #         with mock.patch('torch.save') as save:
-    #             with mock.patch.object(SummaryWriter, 'add_scalar') as writer:
-    #                 trainer.train(1)
-    #
-    #                 # 4 times (for every step in the epoch)
-    #                 self.assertEqual(4, trainer.__validate__.call_count)
-    #                 # 4 for loss 4 for lr
-    #                 self.assertEqual(8, writer.call_count)
-    #                 self.assertEqual(1, save.call_count)
-    #
-    #         trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer,
-    #                           log_dir=self.log_dir, validate_every_steps=4)
-    #         trainer.__validate__ = MagicMock(return_value=None)
-    #         trainer.train(1)
-    #         # for val once
-    #         self.assertEqual(1, trainer.__validate__.call_count)
-    #
-    #
-    # def test_evaluation(self):
-    #     with mock.patch('builtins.input', return_value="no"):
-    #         trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer,
-    #                           log_dir=self.log_dir, eval_first=False, validate_every_steps=4)
-    #
-    #         with mock.patch.object(SummaryWriter, 'add_scalar') as writer:
-    #             trainer.train(1)
-    #             # LR and Loss Loss_v at end of epoch
-    #             self.assertEqual(3, writer.call_count)
-    #
-    #         trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer, eval_first=True,
-    #                           log_dir=self.log_dir, validate_every_steps=4)
-    #         trainer.__calc_metrics_print_save__ = MagicMock(return_value=None)
-    #         trainer.train(1)
-    #
-    #         call_args_train_start = trainer.__calc_metrics_print_save__.call_args_list[0][0]
-    #         call_args_test_start = trainer.__calc_metrics_print_save__.call_args_list[1][0]
-    #         call_args_train_4steps = trainer.__calc_metrics_print_save__.call_args_list[2][0]
-    #         call_args_test_epoch = trainer.__calc_metrics_print_save__.call_args_list[3][0]
-    #
-    #         # both tensors as long as dataset
-    #         self.assertEqual(len(self.data), len(call_args_train_start[0]))
-    #         self.assertEqual(len(self.data), len(call_args_train_start[1]))
-    #         self.assertEqual(len(self.test_data), len(call_args_test_start[0]))
-    #         self.assertEqual(len(self.test_data), len(call_args_test_start[1]))
-    #         self.assertEqual(len(self.data), len(call_args_train_4steps[0]))
-    #         self.assertEqual(len(self.data), len(call_args_train_4steps[1]))
-    #         self.assertEqual(len(self.test_data), len(call_args_test_epoch[0]))
-    #         self.assertEqual(len(self.test_data), len(call_args_test_epoch[1]))
-    #
-    #         # step is 4 (one epoch has gone, 4 batches)
-    #         self.assertEqual(0, call_args_train_start[2])
-    #         self.assertEqual(0, call_args_test_start[2])
-    #         self.assertEqual(4, call_args_train_4steps[2])
-    #         self.assertEqual(4, call_args_test_epoch[2])
-    #
-    #         # validation is true
-    #         self.assertEqual(False, call_args_train_start[3])
-    #         self.assertEqual(True, call_args_test_start[3])
-    #         self.assertEqual(False, call_args_train_4steps[3])
-    #         self.assertEqual(True, call_args_test_epoch[3])
-    #
-    #
-    # def test_metrics_print(self):
-    #     with mock.patch('builtins.input', return_value="no"):
-    #         trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer,
-    #                           checkpoints_dir=self.cp_dir, validate_every_steps=4,
-    #                           log_dir=self.log_dir)
-    #         with mock.patch.object(SummaryWriter, 'add_scalar') as writer:
-    #             with mock.patch('torch.save') as save:
-    #                 # make sure model does not improve!
-    #                 self.optimizer.step = MagicMock()
-    #                 trainer.train(1)
-    #
-    #                 # once per epoch and once because best validation
-    #                 self.assertEqual(2, save.call_count)
-    #
-    #                 # once per epoch, but not again for validation
-    #                 trainer.__best_validation_loss = 0
-    #                 trainer.train(2)
-    #                 self.assertEqual(3, save.call_count)
-    #
-    #                 # twice for train (loss, lr) once for val (loss) at the end of epoch, but twice because 2 epochs
-    #                 self.assertEqual(3 * 2, writer.call_count)
-    #
-    #                 trainer.metrics = {'acc': torchmetrics.Accuracy().to("cuda" if torch.cuda.is_available() else "cpu")}
-    #                 trainer.train(3)
-    #                 # +1 for loss and +1 for acc times 2 for train/test and +1 for train lr
-    #                 self.assertEqual(3 * 2 + 5, trainer.writer_train.add_scalar.call_count)
-    #
-    #
-    # def test_tensor_metrics(self):
-    #     with mock.patch('builtins.input', return_value="no"):
-    #         trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer,
-    #                           log_dir=self.log_dir, validate_every_steps=4)
-    #         with mock.patch.object(SummaryWriter, 'add_scalar') as add_scalar:
-    #             trainer.metrics = {'acc1': torchmetrics.Accuracy().to("cuda" if torch.cuda.is_available() else "cpu"),
-    #                                'acc2': torchmetrics.Accuracy(average='none', num_classes=10)
-    #                                    .to("cuda" if torch.cuda.is_available() else "cpu")}
-    #             trainer.train(1)
-    #             # LR, Loss and ACC1 for train and test (5)
-    #             # plus for every class acc train and test (20)
-    #             self.assertEqual(25, add_scalar.call_count)
-    #
-    #
-    # def test_pr_curves(self):
-    #     with mock.patch('builtins.input', return_value="no"):
-    #         trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer,
-    #                           log_dir=self.log_dir, validate_every_steps=4)
-    #         with mock.patch.object(SummaryWriter, 'add_pr_curve') as add_pr_curve:
-    #             trainer.train(1)
-    #             self.assertEqual(10, add_pr_curve.call_count)
-    #
-    #
-    # def test_checkpoint_creation(self):
-    #     trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer,
-    #                       checkpoints_dir=self.cp_dir, validate_every_steps=4,
-    #                       remove_cp_after_training=False)
-    #     trainer.train(3)
-    #
-    #     self.assertTrue(osp.exists(osp.join(self.cp_dir, "checkpoint_1.pth")))
-    #     self.assertTrue(osp.exists(osp.join(self.cp_dir, "checkpoint_2.pth")))
-    #     self.assertTrue(osp.exists(osp.join(self.cp_dir, "checkpoint_3.pth")))
-    #     self.assertTrue(osp.exists(osp.join(self.cp_dir, "best.pth")))
-    #
-    #
-    # def test_checkpoint_cleanup(self):
-    #     trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer,
-    #                       checkpoints_dir=self.cp_dir, validate_every_steps=4,
-    #                       remove_cp_after_training=True)
-    #     trainer.train(3)
-    #
-    #     self.assertFalse(osp.exists(osp.join(self.cp_dir, "checkpoint_1.pth")))
-    #     self.assertFalse(osp.exists(osp.join(self.cp_dir, "checkpoint_2.pth")))
-    #     self.assertTrue(osp.exists(osp.join(self.cp_dir, "checkpoint_3.pth")))
-    #     self.assertTrue(osp.exists(osp.join(self.cp_dir, "best.pth")))
-    #
-    #
-    # def test_save_and_continue(self):
-    #     trainer = Trainer(self.model, self.dataloader, self.test_dataloader, __constant_loss__(), self.optimizer,
-    #                       checkpoints_dir=self.cp_dir, validate_every_steps=4)
-    #     trainer.train(1)
-    #
-    #     trainer = Trainer(self.model, self.dataloader, self.test_dataloader, __constant_loss__(), self.optimizer,
-    #                       checkpoints_dir=self.cp_dir, validate_every_steps=4)
-    #     trainer.load(os.path.join(self.cp_dir, "checkpoint_1.pth"))
-    #     trainer.loss_fn = __constant_loss__(2)
-    #     with mock.patch('torch.save') as save:
-    #         trainer.train(2)
-    #         self.assertEqual(1, save.call_count)
-    #         self.assertEqual(os.path.join(self.cp_dir, "checkpoint_2.pth"), save.call_args[0][1])
-    #
-    #     trainer.loss_fn = __constant_loss__(0)
-    #     with mock.patch('torch.save') as save:
-    #         trainer.train(3)
-    #         self.assertEqual(2, save.call_count)
-    #         self.assertEqual(os.path.join(self.cp_dir, "best.pth"), save.call_args_list[0][0][1])
-    #         self.assertEqual(os.path.join(self.cp_dir, "checkpoint_3.pth"), save.call_args_list[1][0][1])
-    #
-    #
-    # def test_save_and_auto_load(self):
-    #     with mock.patch('builtins.input', return_value="yes"):
-    #         trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer,
-    #                           validate_every_steps=2,
-    #                           checkpoints_dir=self.cp_dir, load_latest_existing=True, log_dir=self.log_dir)
-    #         trainer.train(2)
-    #         trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer,
-    #                           checkpoints_dir=self.cp_dir, load_latest_existing=True)
-    #         self.assertEqual(2, trainer.current_epoch)
+    def test_train(self):
+        @self.experiment.main
+        def run():
+            self.optimizer.step = MagicMock(return_value=None)
+            trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer)
+            trainer.train()
+            self.optimizer.step.assert_called()
+
+
+        self.experiment.run()
+
+
+    def test_logging_vanilla(self):
+        @self.experiment.main
+        def run(_run):
+            trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer)
+            with mock.patch.object(_run, 'log_scalar') as writer:
+                trainer.train()
+                # Loss LR (train only) and Acc after epoch for train and val
+                self.assertEqual(5, writer.call_count)
+
+
+        self.experiment.run()
+
+
+    def test_logging_every_n_batch(self):
+        @self.experiment.main
+        def run(_run):
+            trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer)
+            with mock.patch.object(_run, 'log_scalar') as writer:
+                trainer.train()
+                # twice Loss LR and Acc plus once val_loss and val_acc at end
+                self.assertEqual(3 + 3 + 2, writer.call_count)
+
+
+        self.experiment.run(config_updates={"trainer.log_every_n_batches": 2})
+
+
+    def test_val_every_n_batch(self):
+        @self.experiment.main
+        def run(_run):
+            trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer)
+            with mock.patch.object(_run, 'log_scalar') as writer:
+                trainer.train()
+                # twice vall_loss and val_acc plus once Loss LR and Ac at end
+                self.assertEqual(2 + 2 + 3, writer.call_count)
+
+
+        self.experiment.run(config_updates={"trainer.val_every_n_batches": 2})
+
+
+    def test_checkpoint_creation(self):
+        @self.experiment.main
+        def run(_run):
+            trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer)
+            trainer.train()
+
+            self.assertTrue(osp.exists(osp.join(self.cp_dir, "checkpoint_1.pth")))
+            self.assertTrue(osp.exists(osp.join(self.cp_dir, "checkpoint_2.pth")))
+            self.assertTrue(osp.exists(osp.join(self.cp_dir, "checkpoint_3.pth")))
+            self.assertTrue(osp.exists(osp.join(self.cp_dir, "best.pth")))
+
+
+        self.experiment.run(config_updates={"trainer.epochs": 3, "trainer.cp_dir": self.cp_dir, "trainer.remove_cp_after_training": False})
+
+
+    def test_checkpoint_cleanup(self):
+        @self.experiment.main
+        def run(_run):
+            trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer)
+            trainer.train()
+
+            self.assertFalse(osp.exists(osp.join(self.cp_dir, "checkpoint_1.pth")))
+            self.assertFalse(osp.exists(osp.join(self.cp_dir, "checkpoint_2.pth")))
+            self.assertTrue(osp.exists(osp.join(self.cp_dir, "checkpoint_3.pth")))
+            self.assertTrue(osp.exists(osp.join(self.cp_dir, "best.pth")))
+
+
+        self.experiment.run(config_updates={"trainer.epochs": 3, "trainer.cp_dir": self.cp_dir})
+
+
+    def test_save_and_continue(self):
+        @self.experiment.main
+        def run(_run):
+            trainer = Trainer(self.model, self.dataloader, self.test_dataloader, __constant_loss__(), self.optimizer)
+            trainer.train()
+
+
+        self.experiment.run(config_updates={"trainer.cp_dir": self.cp_dir})
+
+
+        @self.experiment.main
+        def run(_run):
+            trainer = Trainer(self.model, self.dataloader, self.test_dataloader, __constant_loss__(2), self.optimizer)
+            trainer.load(os.path.join(self.cp_dir, "checkpoint_1.pth"))
+            with mock.patch('torch.save') as save:
+                trainer.train()
+                self.assertEqual(1, save.call_count)
+                self.assertEqual(os.path.join(self.cp_dir, "checkpoint_2.pth"), save.call_args[0][1])
+
+
+        self.experiment.run(config_updates={"trainer.epochs": 2, "trainer.cp_dir": self.cp_dir, "trainer.remove_cp_after_training": False})
+
+
+        @self.experiment.main
+        def run(_run):
+            trainer = Trainer(self.model, self.dataloader, self.test_dataloader, __constant_loss__(0), self.optimizer)
+            trainer.loss_fn = __constant_loss__(0)
+            with mock.patch('torch.save') as save:
+                trainer.train()
+                self.assertEqual(2, save.call_count)
+                self.assertEqual(os.path.join(self.cp_dir, "best.pth"), save.call_args_list[0][0][1])
+                self.assertEqual(os.path.join(self.cp_dir, "checkpoint_2.pth"), save.call_args_list[1][0][1])
+
+
+        # only train to two epochs again, because the patch used earlier does not really save anything
+        self.experiment.run(config_updates={"trainer.epochs": 2, "trainer.cp_dir": self.cp_dir})
+
+
+    def test_save_and_auto_load(self):
+        @self.experiment.main
+        def run(_run):
+            trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer)
+            trainer.train()
+
+            self.optimizer.step = MagicMock(return_value=None)
+            trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer)
+            trainer.train()
+            self.optimizer.step.assert_not_called()
+
+        self.experiment.run(config_updates={"trainer.epochs": 2, "trainer.cp_dir": self.cp_dir})
     #
     #
     # def test_test(self):
@@ -287,8 +213,9 @@ class TrainerTest(unittest.TestCase):
     #     self.assertEqual(max(gt) + 1, pred.size()[1])
 
 
-class __constant_loss__:
+class __constant_loss__(torch.nn.Module):
     def __init__(self, value: int = 1):
+        super().__init__()
         self.value = __loss_mock__(value)
 
 

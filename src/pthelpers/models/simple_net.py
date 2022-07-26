@@ -1,7 +1,16 @@
 """Providing a Simple convolutional NN to test code."""
 
 import torch.nn.functional as F
+from sacred import Ingredient
 from torch import nn
+
+
+simple_model_ingredient = Ingredient('model')
+
+@simple_model_ingredient.config
+def cfg():
+    pass
+
 
 class Net(nn.Module):
     """
