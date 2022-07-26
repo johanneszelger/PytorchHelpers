@@ -6,21 +6,10 @@ vision_transforms_factory_ingredient = Ingredient("transforms_factory")
 
 @vision_transforms_factory_ingredient.config
 def cfg():
-    resize: {
-        "width": None,
-        "height": None
-    }
+    resize: None
     rotate = None
-    color_jitter: {
-        "brightness": None,
-        "hue": None,
-        "contrast": None,
-        "saturation": None
-    }
-    perspective: {
-        "strength": None,
-        "probability": None
-    }
+    color_jitter: None
+    perspective: None
     force_3ch = False
 
 
@@ -34,11 +23,16 @@ def generate_train_transforms(_config):
         trafos.append(transforms.RandomRotation(_config["rotate"]))
 
     if _config["color_jitter"]:
-        trafos.append(transforms.ColorJitter(_config["color_jitter"]["brightness"], _config["color_jitter"]["contrast"],
-                                             _config["color_jitter"]["saturation"], _config["color_jitter"]["hue"]))
+        trafos.append(transforms.ColorJitter(
+                _config["color_jitter"]["brightness"] if _config["color_jitter"]["brightness"] else 0,
+                _config["color_jitter"]["contrast"] if _config["color_jitter"]["contrast"] else 0,
+                _config["color_jitter"]["saturation"] if _config["color_jitter"]["saturation"] else 0,
+                _config["color_jitter"]["hue"] if _config["color_jitter"]["hue"] else 0))
 
     if _config["perspective"]:
-        trafos.append(transforms.Resize((_config["resize"]["width"], _config["resize"]["height"])))
+        trafos.append(transforms.RandomPerspective(
+                _config["perspective"]["strength"] if _config["perspective"]["strength"] else 0,
+                _config["perspective"]["probability"] if _config["perspective"]["probability"] else 0))
 
     trafos.append(transforms.ToTensor())
 
