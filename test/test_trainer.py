@@ -152,7 +152,6 @@ class TrainerTest(unittest.TestCase):
         @self.experiment.main
         def run(_run):
             trainer = Trainer(self.model, self.dataloader, self.test_dataloader, __constant_loss__(2), self.optimizer)
-            trainer.load(os.path.join(self.cp_dir, "checkpoint_1.pth"))
             with mock.patch('torch.save') as save:
                 trainer.train()
                 self.assertEqual(1, save.call_count)

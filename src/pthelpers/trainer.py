@@ -291,7 +291,7 @@ class Trainer:
 
         _log.info(f'Saving checkpoint: {cp_dir}')
 
-        torch.save({'epoch': self.__epoch + 1,
+        torch.save({'epoch': self.__epoch,
                     'state_dict': self.model.state_dict(),
                     'optimizer': self.optimizer.state_dict(),
                     'best_loss': self.__best_validation_loss,
