@@ -167,6 +167,8 @@ class Trainer:
             with tqdm(self.__train_dataloader, unit="batch") as tepoch:
                 tepoch.set_description(f"Epoch {self.__epoch}")
                 for i, (inputs, y) in enumerate(tepoch, 0):
+                    (inputs, y) = (inputs.to(device), y.to(device))
+
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
 
