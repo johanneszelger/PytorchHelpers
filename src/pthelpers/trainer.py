@@ -230,7 +230,7 @@ class Trainer:
 
     @trainer_ingredient.capture
     @torch.no_grad()
-    def __validate__(self, _run, _log, step=None, prefix="val_"):
+    def __validate__(self, _run, _log, _config, step=None, prefix="val_"):
         if not step:
             raise ValueError("step is required for validation")
 
@@ -239,8 +239,10 @@ class Trainer:
         for metric in self.__val_metrics.values():
             metric.reset()
 
+        device = "cuda" if torch.cuda.is_available() and _config["use_gpu"] else "cpu"
         loss = 0
         for x, y in self.__validation_dataloader:
+            (x, y) = (x.to(device), y.to(device))
             y_hat = self.model(x)
             loss = self.loss_fn(y_hat, y).item()
             for metric in self.__val_metrics.values():
