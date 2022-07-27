@@ -120,7 +120,8 @@ class TrainerTest(unittest.TestCase):
             self.assertTrue(osp.exists(osp.join(self.cp_dir, "best.pth")))
 
 
-        self.experiment.run(config_updates={"trainer.epochs": 3, "trainer.cp_dir": self.cp_dir, "trainer.remove_cp_after_training": False})
+        self.experiment.run(config_updates={"trainer.epochs": 3, "trainer.cp_dir": self.cp_dir, "trainer.cp_dir_append_run": False,
+                                            "trainer.remove_cp_after_training": False})
 
 
     def test_checkpoint_cleanup(self):
@@ -135,7 +136,7 @@ class TrainerTest(unittest.TestCase):
             self.assertTrue(osp.exists(osp.join(self.cp_dir, "best.pth")))
 
 
-        self.experiment.run(config_updates={"trainer.epochs": 3, "trainer.cp_dir": self.cp_dir})
+        self.experiment.run(config_updates={"trainer.epochs": 3, "trainer.cp_dir": self.cp_dir, "trainer.cp_dir_append_run": False})
 
 
     def test_save_and_continue(self):
@@ -145,7 +146,7 @@ class TrainerTest(unittest.TestCase):
             trainer.train()
 
 
-        self.experiment.run(config_updates={"trainer.cp_dir": self.cp_dir})
+        self.experiment.run(config_updates={"trainer.cp_dir": self.cp_dir, "trainer.cp_dir_append_run": False})
 
 
         @self.experiment.main
@@ -158,7 +159,8 @@ class TrainerTest(unittest.TestCase):
                 self.assertEqual(os.path.join(self.cp_dir, "checkpoint_2.pth"), save.call_args[0][1])
 
 
-        self.experiment.run(config_updates={"trainer.epochs": 2, "trainer.cp_dir": self.cp_dir, "trainer.remove_cp_after_training": False})
+        self.experiment.run(config_updates={"trainer.epochs": 2, "trainer.cp_dir": self.cp_dir, "trainer.cp_dir_append_run": False,
+                                            "trainer.remove_cp_after_training": False})
 
 
         @self.experiment.main
@@ -173,7 +175,7 @@ class TrainerTest(unittest.TestCase):
 
 
         # only train to two epochs again, because the patch used earlier does not really save anything
-        self.experiment.run(config_updates={"trainer.epochs": 2, "trainer.cp_dir": self.cp_dir})
+        self.experiment.run(config_updates={"trainer.epochs": 2, "trainer.cp_dir": self.cp_dir, "trainer.cp_dir_append_run": False})
 
 
     def test_save_and_auto_load(self):
@@ -187,7 +189,7 @@ class TrainerTest(unittest.TestCase):
             trainer.train()
             self.optimizer.step.assert_not_called()
 
-        self.experiment.run(config_updates={"trainer.epochs": 2, "trainer.cp_dir": self.cp_dir})
+        self.experiment.run(config_updates={"trainer.epochs": 2, "trainer.cp_dir": self.cp_dir, "trainer.cp_dir_append_run": False})
     #
     #
     # def test_test(self):
