@@ -267,6 +267,8 @@ class Trainer:
         if cp_dir_append_experiment:
             cp_dir = osp.join(cp_dir, _run.experiment_info['name'])
         if cp_dir_append_run and _run._id:
+            if not _run._id:
+                return None
             cp_dir = osp.join(cp_dir, str(_run._id) if str(_run._id) != '' else '-')
         os.makedirs(cp_dir, exist_ok=True)
 
