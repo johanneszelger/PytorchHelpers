@@ -48,7 +48,7 @@ class Trainer:
             return None
 
         epochs = [x.replace("checkpoint_", "").replace(".pth", "") for x in os.listdir(cp_dir) if
-                  not x.startswith("best") and osp.isdir(x)]
+                  not x.startswith("best") and not osp.isdir(x)]
         if len(epochs) == 0:
             return None
         last_epoch = max(epochs)
@@ -184,14 +184,16 @@ class Trainer:
 
                     tepoch.set_postfix(metric_results, loss=loss.item() / self.batch_size)
 
-                    self.log_training(_config, _run, i, running_metric_results)
+                    if _config["log_every_n_batches"]:
+                        self.log_training(_config, _run, i, running_metric_results)
 
                     if _config["val_every_n_batches"]:
                         batches = (i + 1) + self.dl_len * self.__epoch
                         if batches % _config["val_every_n_batches"] == 0:
                             self.__validate__(step=batches * self.batch_size)
 
-            self.log_training(_config, _run, i, running_metric_results)
+            if not _config["log_every_n_batches"]:
+                self.log_training(_config, _run, i, running_metric_results)
 
             if not _config["val_every_n_batches"] and self.__validation_dataloader:
                 batches_total = self.dl_len * (self.__epoch + 1)
