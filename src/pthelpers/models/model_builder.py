@@ -20,8 +20,13 @@ def build_densenet(_log, growth_rate, block_config, num_init_features, bn_size, 
     )
 
 @model_builder_ingredient.capture(prefix='densenet121')
-def build_densenet121(_log, pretrained, num_classes):
+def build_densenet121(_log, pretrained, frozen, num_classes):
     densenet = densenet121(pretrained, num_classes=num_classes)
+
+    if frozen:
+        for param in densenet.params():
+            param.requires_grad = False
+        densenet.classifier.requires_grad = True
 
     return nn.Sequential(
         densenet,
