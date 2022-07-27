@@ -27,6 +27,7 @@ def cfg():
     cp_dir_append_run = True
     remove_cp_after_training = True
     epochs = 1
+    unfreeze_after = None
     use_gpu = True
     log_every_n_batches = None
     val_every_n_batches = None
@@ -54,6 +55,7 @@ class Trainer:
         _log.info(f'Found existing checkpoint: checkpoint_{last_epoch}.pth in {cp_dir}')
         self.load(osp.join(cp_dir, f"checkpoint_{last_epoch}.pth"))
 
+
     @trainer_ingredient.capture()
     def __init__(self,
                  model: torch.nn.Module = None,
@@ -70,7 +72,7 @@ class Trainer:
                  # eval_first: bool = False,
                  # class_names: [] = None,
                  # use_gpu: bool = True \
-                 _config = None) -> None:
+                 _config=None) -> None:
         """
         :param model: the model to train
         :param train_dataloader: the data to train with
@@ -134,6 +136,7 @@ class Trainer:
         """
 
         self.__load_existing_cp__()
+        self.__model.train()
 
         _log.info(f'Starting training')
         if not Reproducer.seed_set and not _config["ignore_reproducibility"]:
@@ -153,6 +156,9 @@ class Trainer:
 
         epoch_start = self.__epoch
         for self.__epoch in range(epoch_start, _config["epochs"]):
+            if _config["unfreeze_after"] and self.__epoch == _config["unfreeze_after"]:
+                self.__unfreeze_model__()
+
             running_loss = 0.0
             running_metric_results = {}
             for name in self.__metrics.keys():
@@ -208,7 +214,6 @@ class Trainer:
         return self.results
 
 
-
     def log_training(self, _config, _run, i, running_loss, running_metric_results):
         batches = (i + 1) + len(self.__train_dataloader) * self.__epoch
         if batches % _config["log_every_n_batches"] == 0:
@@ -228,6 +233,8 @@ class Trainer:
         if not step:
             raise ValueError("step is required for validation")
 
+        self.__model.eval()
+
         for metric in self.__val_metrics.values():
             metric.reset()
 
@@ -244,6 +251,9 @@ class Trainer:
             self.results[name] = metric.compute().item() / len(self.__validation_dataloader)
             _run.log_scalar(prefix + name, self.results[name], step)
             metric.reset()
+
+        # save in trained state!
+        self.__model.train()
 
         if self.__best_validation_loss is None or loss < self.__best_validation_loss:
             _log.info(f'found new best validation loss, {self.__best_validation_loss} vs. {loss}')
@@ -292,6 +302,7 @@ class Trainer:
         self.__optimizer.load_state_dict(checkpoint['optimizer'])
         self.__best_validation_loss = checkpoint['best_loss']
 
+
     @trainer_ingredient.capture
     def clean_checkpoints(self, remove_cp_after_training):
         cp_dir = self.__get_final_cp_dir__()
@@ -299,3 +310,8 @@ class Trainer:
             for f in os.listdir(cp_dir):
                 if f != f'checkpoint_{self.__epoch + 1}.pth' and f != 'best.pth':
                     os.remove(osp.join(cp_dir, f))
+
+
+    def __unfreeze_model__(self):
+        for param in self.__model.parameters():
+            param.requires_grad = True

@@ -7,8 +7,7 @@ import torch
 
 
 class Reproducer:
-    seed_set = False
-
+    seed_set = None
 
     @staticmethod
     def set_seed(seed: int, deterministic:bool = False):
@@ -27,7 +26,7 @@ class Reproducer:
         torch.manual_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
-        Reproducer.seed_set = True
+        Reproducer.seed_set = seed
 
 
         def seed_worker(worker_id):
