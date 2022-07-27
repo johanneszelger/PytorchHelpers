@@ -298,7 +298,7 @@ class Trainer:
 
     def load(self, cp_dir: str) -> None:
         checkpoint = torch.load(cp_dir)
-        self.__epoch = checkpoint['epoch']
+        self.__epoch = checkpoint['epoch'] + 1
         self.model.load_state_dict(checkpoint['state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.__best_validation_loss = checkpoint['best_loss']
