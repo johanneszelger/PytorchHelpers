@@ -112,6 +112,7 @@ class Trainer:
 
         self.model = model
         self.__train_dataloader = train_dataloader
+        self.dl_len = len(self.__train_dataloader)
         self.__validation_dataloader = validation_dataloader
         self.loss_fn = loss_fn
         self.optimizer = optimizer
@@ -121,7 +122,6 @@ class Trainer:
         self.__best_validation_loss = None
         self.__epoch = 0
 
-        self.samples_per_log = _config["log_every_n_batches"] * self.__train_dataloader.batch_size if _config["log_every_n_batches"] else 1
         self.batch_size = self.__train_dataloader.batch_size
 
         self.results = {}
@@ -155,22 +155,18 @@ class Trainer:
         for metric in self.__val_metrics.values():
             metric.to(device)
 
+        running_metric_results = {'loss': 0}
+        for name in self.metrics.keys():
+            running_metric_results[name] = 0
+
         epoch_start = self.__epoch
         for self.__epoch in range(epoch_start, _config["epochs"]):
             if _config["unfreeze_after"] and self.__epoch == _config["unfreeze_after"]:
                 self.__unfreeze_model__()
 
-            running_loss = 0.0
-            running_metric_results = {}
-            for name in self.metrics.keys():
-                running_metric_results[name] = 0
-
             with tqdm(self.__train_dataloader, unit="batch") as tepoch:
                 tepoch.set_description(f"Epoch {self.__epoch}")
                 for i, (inputs, y) in enumerate(tepoch, 0):
-                    dl_len = len(self.__train_dataloader)
-                    samples = ((i + 1) + len(self.__train_dataloader) * self.__epoch) * self.batch_size
-
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
 
@@ -180,8 +176,7 @@ class Trainer:
                     loss.backward()
                     self.optimizer.step()
 
-                    running_loss += loss.item()
-
+                    running_metric_results['loss'] += loss.item()
                     metric_results = {}
                     for name, metric in self.metrics.items():
                         metric_results[name] = metric(y_hat, y.int()).item()
@@ -189,26 +184,17 @@ class Trainer:
 
                     tepoch.set_postfix(metric_results, loss=loss.item() / self.batch_size)
 
-                    if _config["log_every_n_batches"]:
-                        running_loss = self.log_training(_config, _run, i, running_loss, running_metric_results)
+                    self.log_training(_config, _run, i, running_metric_results)
 
                     if _config["val_every_n_batches"]:
-                        batches = (i + 1) + len(self.__train_dataloader) * self.__epoch
+                        batches = (i + 1) + self.dl_len * self.__epoch
                         if batches % _config["val_every_n_batches"] == 0:
                             self.__validate__(step=batches * self.batch_size)
 
-            if _config["log_every_n_batches"] is None:
-                _run.log_scalar("LR", self.optimizer.param_groups[0]['lr'])
-                batches_per_epoch = len(self.__train_dataloader)
-                batches_total = batches_per_epoch * (self.__epoch + 1)
-                samples_per_epoch = batches_per_epoch * self.batch_size
-                _run.log_scalar("loss", running_loss / samples_per_epoch, batches_total * self.batch_size)
-                for name, metric in self.metrics.items():
-                    _run.log_scalar(name, running_metric_results[name] / batches_per_epoch,
-                                    batches_total * self.batch_size)
+            self.log_training(_config, _run, i, running_metric_results)
 
-            if _config["val_every_n_batches"] is None and self.__validation_dataloader:
-                batches_total = len(self.__train_dataloader) * (self.__epoch + 1)
+            if not _config["val_every_n_batches"] and self.__validation_dataloader:
+                batches_total = self.dl_len * (self.__epoch + 1)
                 self.__validate__(step=batches_total * self.batch_size)
 
             self.__save__(name=f'checkpoint_{self.__epoch + 1}.pth')
@@ -218,19 +204,24 @@ class Trainer:
         return self.results
 
 
-    def log_training(self, _config, _run, i, running_loss, running_metric_results):
-        batches_per_epoch = len(self.__train_dataloader)
+    def log_training(self, _config, _run, i, running_metric_results):
+        batches_per_epoch = self.dl_len
         batches_total = (i + 1) + batches_per_epoch * (self.__epoch)
 
-        if batches_total % _config["log_every_n_batches"] == 0:
+        divider = None
+        if not _config["log_every_n_batches"] and i + 1 == self.dl_len:
+            divider = self.dl_len
+        if _config["log_every_n_batches"] and batches_total % _config["log_every_n_batches"] == 0:
+            divider = _config["log_every_n_batches"]
+
+        if divider:
             _run.log_scalar("LR", self.optimizer.param_groups[0]['lr'])
-            _run.log_scalar("loss", running_loss / self.samples_per_log, batches_total * self.batch_size)
-            running_loss = 0.0
+            _run.log_scalar("loss", running_metric_results["loss"] / divider, batches_total * self.batch_size)
+            running_metric_results["loss"] = 0
             for name, metric in self.metrics.items():
-                _run.log_scalar(name, running_metric_results[name] / _config["log_every_n_batches"],
+                _run.log_scalar(name, running_metric_results[name] / divider,
                                 batches_total * self.batch_size)
                 running_metric_results[name] = 0
-        return running_loss
 
 
     @trainer_ingredient.capture
