@@ -184,8 +184,8 @@ class Trainer:
 
                     tepoch.set_postfix(metric_results, loss=loss.item() / self.batch_size)
 
-                    if _config["log_every_n_batches"]:
-                        self.log_training(_config, _run, i, running_metric_results)
+                    # if _config["log_every_n_batches"]:
+                    #     self.log_training(_config, _run, i, running_metric_results)
 
                     if _config["val_every_n_batches"]:
                         batches = (i + 1) + self.dl_len * self.__epoch
