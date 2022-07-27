@@ -136,16 +136,6 @@ class Trainer:
         :return: None
         """
 
-        self.__load_existing_cp__()
-        self.model.train()
-
-        _log.info(f'Starting training')
-        if not Reproducer.seed_set and not _config["ignore_reproducibility"]:
-            raise ValueError("Seeds not set, please use Reproducer.set_seed() to do so or set ignore_reproducibility "
-                             "to True in config")
-
-        # load existing here
-
         # send all to device here
         device = "cuda" if torch.cuda.is_available() and _config["use_gpu"] else "cpu"
         self.model.to(device)
@@ -154,6 +144,16 @@ class Trainer:
             metric.to(device)
         for metric in self.__val_metrics.values():
             metric.to(device)
+
+
+        # load existing here
+        self.__load_existing_cp__()
+        self.model.train()
+
+        _log.info(f'Starting training')
+        if not Reproducer.seed_set and not _config["ignore_reproducibility"]:
+            raise ValueError("Seeds not set, please use Reproducer.set_seed() to do so or set ignore_reproducibility "
+                             "to True in config")
 
         running_metric_results = {'loss': 0}
         for name in self.metrics.keys():
