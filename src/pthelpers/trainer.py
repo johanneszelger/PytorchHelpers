@@ -110,12 +110,12 @@ class Trainer:
         if metrics is None:
             metrics = {'accuracy': Accuracy()}
 
-        self.__model = model
+        self.model = model
         self.__train_dataloader = train_dataloader
         self.__validation_dataloader = validation_dataloader
-        self.__loss_fn = loss_fn
-        self.__optimizer = optimizer
-        self.__metrics = metrics
+        self.loss_fn = loss_fn
+        self.optimizer = optimizer
+        self.metrics = metrics
         self.__val_metrics = copy.deepcopy(metrics)
 
         self.__best_validation_loss = None
@@ -137,7 +137,7 @@ class Trainer:
         """
 
         self.__load_existing_cp__()
-        self.__model.train()
+        self.model.train()
 
         _log.info(f'Starting training')
         if not Reproducer.seed_set and not _config["ignore_reproducibility"]:
@@ -148,9 +148,9 @@ class Trainer:
 
         # send all to device here
         device = "cuda" if torch.cuda.is_available() and _config["use_gpu"] else "cpu"
-        self.__model.to(device)
-        self.__loss_fn.to(device)
-        for metric in self.__metrics.values():
+        self.model.to(device)
+        self.loss_fn.to(device)
+        for metric in self.metrics.values():
             metric.to(device)
         for metric in self.__val_metrics.values():
             metric.to(device)
@@ -162,7 +162,7 @@ class Trainer:
 
             running_loss = 0.0
             running_metric_results = {}
-            for name in self.__metrics.keys():
+            for name in self.metrics.keys():
                 running_metric_results[name] = 0
 
             with tqdm(self.__train_dataloader, unit="batch") as tepoch:
@@ -172,18 +172,18 @@ class Trainer:
                     samples = ((i + 1) + len(self.__train_dataloader) * self.__epoch) * self.batch_size
 
                     # zero the parameter gradients
-                    self.__optimizer.zero_grad()
+                    self.optimizer.zero_grad()
 
                     # forward + backward + optimize
-                    y_hat = self.__model(inputs)
-                    loss = self.__loss_fn(y_hat, y)
+                    y_hat = self.model(inputs)
+                    loss = self.loss_fn(y_hat, y)
                     loss.backward()
-                    self.__optimizer.step()
+                    self.optimizer.step()
 
                     running_loss += loss.item()
 
                     metric_results = {}
-                    for name, metric in self.__metrics.items():
+                    for name, metric in self.metrics.items():
                         metric_results[name] = metric(y_hat, y.int()).item()
                         running_metric_results[name] += metric_results[name]
 
@@ -198,12 +198,12 @@ class Trainer:
                             self.__validate__(step=batches * self.batch_size)
 
             if _config["log_every_n_batches"] is None:
-                _run.log_scalar("LR", self.__optimizer.param_groups[0]['lr'])
+                _run.log_scalar("LR", self.optimizer.param_groups[0]['lr'])
                 batches_per_epoch = len(self.__train_dataloader)
                 batches_total = batches_per_epoch * (self.__epoch + 1)
                 samples_per_epoch = batches_per_epoch * self.batch_size
                 _run.log_scalar("loss", running_loss / samples_per_epoch, batches_total * self.batch_size)
-                for name, metric in self.__metrics.items():
+                for name, metric in self.metrics.items():
                     _run.log_scalar(name, running_metric_results[name] / batches_per_epoch,
                                     batches_total * self.batch_size)
 
@@ -223,10 +223,10 @@ class Trainer:
         batches_total = (i + 1) + batches_per_epoch * (self.__epoch)
 
         if batches_total % _config["log_every_n_batches"] == 0:
-            _run.log_scalar("LR", self.__optimizer.param_groups[0]['lr'])
+            _run.log_scalar("LR", self.optimizer.param_groups[0]['lr'])
             _run.log_scalar("loss", running_loss / self.samples_per_log, batches_total * self.batch_size)
             running_loss = 0.0
-            for name, metric in self.__metrics.items():
+            for name, metric in self.metrics.items():
                 _run.log_scalar(name, running_metric_results[name] / _config["log_every_n_batches"],
                                 batches_total * self.batch_size)
                 running_metric_results[name] = 0
@@ -239,15 +239,15 @@ class Trainer:
         if not step:
             raise ValueError("step is required for validation")
 
-        self.__model.eval()
+        self.model.eval()
 
         for metric in self.__val_metrics.values():
             metric.reset()
 
         loss = 0
         for x, y in self.__validation_dataloader:
-            y_hat = self.__model(x)
-            loss = self.__loss_fn(y_hat, y).item()
+            y_hat = self.model(x)
+            loss = self.loss_fn(y_hat, y).item()
             for metric in self.__val_metrics.values():
                 metric.update(y_hat, y.int())
 
@@ -259,7 +259,7 @@ class Trainer:
             metric.reset()
 
         # save in trained state!
-        self.__model.train()
+        self.model.train()
 
         if self.__best_validation_loss is None or loss < self.__best_validation_loss:
             _log.info(f'found new best validation loss, {self.__best_validation_loss} vs. {loss}')
@@ -293,8 +293,8 @@ class Trainer:
         _log.info(f'Saving checkpoint: {cp_dir}')
 
         torch.save({'epoch': self.__epoch + 1,
-                    'state_dict': self.__model.state_dict(),
-                    'optimizer': self.__optimizer.state_dict(),
+                    'state_dict': self.model.state_dict(),
+                    'optimizer': self.optimizer.state_dict(),
                     'best_loss': self.__best_validation_loss,
                     'current_loss': loss,
                     },
@@ -304,8 +304,8 @@ class Trainer:
     def load(self, cp_dir: str) -> None:
         checkpoint = torch.load(cp_dir)
         self.__epoch = checkpoint['epoch']
-        self.__model.load_state_dict(checkpoint['state_dict'])
-        self.__optimizer.load_state_dict(checkpoint['optimizer'])
+        self.model.load_state_dict(checkpoint['state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.__best_validation_loss = checkpoint['best_loss']
 
 
@@ -319,5 +319,5 @@ class Trainer:
 
 
     def __unfreeze_model__(self):
-        for param in self.__model.parameters():
+        for param in self.model.parameters():
             param.requires_grad = True
