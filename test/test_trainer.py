@@ -13,8 +13,7 @@ from torchvision.transforms import ToTensor
 from unittest import mock
 
 from src.pthelpers.models.simple_net import Net
-from src.pthelpers.reproducibility import Reproducer
-from src.pthelpers.trainer import Trainer, trainer_ingredient
+from src.pthelpers.training.trainer import Trainer, trainer_ingredient
 
 
 def optionHook(options):
