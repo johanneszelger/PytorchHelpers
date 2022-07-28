@@ -5,7 +5,7 @@ import torchvision
 from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor
 
-from src.pthelpers.util.normilization import get_mean_and_std
+from src.pthelpers.utils.normilization import get_mean_and_std
 
 
 class Test(TestCase):

@@ -15,7 +15,7 @@ from tqdm import tqdm
 try:
     from pthelpers.reproducibility import Reproducer
 except:
-    from src.pthelpers.util.reproducibility import Reproducer
+    from src.pthelpers.utils.reproducibility import Reproducer
 
 trainer_ingredient = Ingredient('trainer')
 
