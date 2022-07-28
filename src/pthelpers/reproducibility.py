@@ -24,6 +24,7 @@ class Reproducer:
             os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
 
         torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
         Reproducer.seed_set = seed
