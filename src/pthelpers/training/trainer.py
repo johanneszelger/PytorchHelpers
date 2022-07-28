@@ -13,7 +13,7 @@ from torchmetrics import Accuracy
 from tqdm import tqdm
 
 try:
-    from pthelpers.reproducibility import Reproducer
+    from pthelpers.utils.reproducibility import Reproducer
 except:
     from src.pthelpers.utils.reproducibility import Reproducer
 
