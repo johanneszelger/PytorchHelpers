@@ -162,6 +162,7 @@ class Trainer:
         epoch_start = self.__epoch
         for self.__epoch in range(epoch_start, _config["epochs"]):
             if _config["unfreeze_after"] and self.__epoch == _config["unfreeze_after"]:
+                _log.info("unfreezing model")
                 self.__unfreeze_model__()
 
             with tqdm(self.__train_dataloader, unit="batch") as tepoch:
