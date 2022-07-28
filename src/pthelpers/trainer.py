@@ -165,7 +165,7 @@ class Trainer:
                 self.__unfreeze_model__()
 
             with tqdm(self.__train_dataloader, unit="batch") as tepoch:
-                tepoch.set_description(f"Epoch {self.__epoch}")
+                tepoch.set_description(f"Epoch {self.__epoch + 1}")
                 for i, (inputs, y) in enumerate(tepoch, 0):
                     (inputs, y) = (inputs.to(device), y.to(device))
 
