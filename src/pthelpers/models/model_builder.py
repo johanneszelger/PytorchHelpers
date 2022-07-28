@@ -28,7 +28,7 @@ def build_densenet121(_log, pretrained, frozen, num_classes):
         densenet.classifier = nn.Linear(num_ftrs, num_classes)
 
     if frozen:
-        for param in densenet.params():
+        for param in densenet.parameters():
             param.requires_grad = False
         densenet.classifier.requires_grad = True
 
