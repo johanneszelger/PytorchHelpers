@@ -10,6 +10,10 @@ vision_transforms_factory_ingredient = Ingredient("transforms_factory")
 #         "width": None,
 #         "height": None
 #     }
+#     normalize {
+#         "std": None,
+#         "mean": None
+#     }
 #     rotate = None
 #     color_jitter: {
 #         "brightness": None,
@@ -30,6 +34,9 @@ def generate_train_transforms(_config):
 
     if "resize" in _config and _config["resize"]:
         trafos.append(transforms.Resize((_config["resize"]["width"], _config["resize"]["height"])))
+
+    if "normalize" in _config and _config["normalize"]:
+        trafos.append(transforms.Normalize(_config["std"], _config["mean"]))
 
     if "rotate" in _config and _config["rotate"]:
         trafos.append(transforms.RandomRotation(_config["rotate"]))
