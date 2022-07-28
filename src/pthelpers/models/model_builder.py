@@ -1,6 +1,7 @@
 from sacred import Ingredient
 from torch import nn
-from torchvision.models import DenseNet, densenet121
+from torchvision.models import DenseNet, densenet121, DenseNet121_Weights
+from typing import Tuple
 
 model_builder_ingredient = Ingredient('model')
 
@@ -11,7 +12,8 @@ def build_model(_log, model_name):
 
 
 @model_builder_ingredient.capture(prefix='densenet')
-def build_densenet(_log, growth_rate, block_config, num_init_features, bn_size, drop_rate, memory_efficient, num_classes):
+def build_densenet(_log, growth_rate: int, block_config: Tuple[int, int, int, int], num_init_features: int, bn_size: int,
+                   drop_rate: float, memory_efficient, num_classes):
     densenet = DenseNet(growth_rate, block_config, num_init_features, bn_size, drop_rate, num_classes, memory_efficient)
 
     return nn.Sequential(
@@ -20,10 +22,10 @@ def build_densenet(_log, growth_rate, block_config, num_init_features, bn_size, 
     )
 
 @model_builder_ingredient.capture(prefix='densenet121')
-def build_densenet121(_log, pretrained, frozen, num_classes):
-    densenet = densenet121(pretrained, num_classes=1000 if pretrained else num_classes)
+def build_densenet121(_log, weights: str, frozen: bool, num_classes: int, drop_rate: float = 0):
+    densenet = densenet121(weights=DenseNet121_Weights[weights], num_classes=1000 if weights else num_classes, drop_rate=drop_rate)
 
-    if pretrained and num_classes != 1000:
+    if weights and num_classes != 1000:
         num_ftrs = densenet.classifier.in_features
         densenet.classifier = nn.Linear(num_ftrs, num_classes)
 
