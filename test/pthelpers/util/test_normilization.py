@@ -16,5 +16,5 @@ class Test(TestCase):
 
         mean, std = get_mean_and_std(dataloader)
 
-        self.assertEqual(mean.item(), 0.13066695630550385)
-        self.assertEqual(std.item(), 0.3081152141094208)
+        self.assertAlmostEqual(mean.item(), 0.1307, 3)
+        self.assertAlmostEqual(std.item(), 0.3081, 3)
