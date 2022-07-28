@@ -36,7 +36,7 @@ def generate_train_transforms(_config):
         trafos.append(transforms.Resize((_config["resize"]["width"], _config["resize"]["height"])))
 
     if "normalize" in _config and _config["normalize"]:
-        trafos.append(transforms.Normalize(_config["std"], _config["mean"]))
+        trafos.append(transforms.Normalize(_config["normalize"]["mean"], _config["normalize"]["std"]))
 
     if "rotate" in _config and _config["rotate"]:
         trafos.append(transforms.RandomRotation(_config["rotate"]))
