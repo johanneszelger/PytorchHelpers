@@ -5,6 +5,7 @@ from typing import Tuple
 
 model_builder_ingredient = Ingredient('model')
 
+
 @model_builder_ingredient.capture()
 def build_model(_log, model_name):
     if model_name == 'Densenet': return build_densenet()
@@ -17,9 +18,10 @@ def build_densenet(_log, growth_rate: int, block_config: Tuple[int, int, int, in
     densenet = DenseNet(growth_rate, block_config, num_init_features, bn_size, drop_rate, num_classes, memory_efficient)
 
     return nn.Sequential(
-        densenet,
-        nn.Sigmoid() if num_classes == 1 else nn.Softmax()
+            densenet,
+            nn.Sigmoid() if num_classes == 1 else nn.Softmax()
     )
+
 
 @model_builder_ingredient.capture(prefix='densenet121')
 def build_densenet121(_log, weights: str, frozen: bool, num_classes: int, drop_rate: float = 0):
@@ -32,9 +34,11 @@ def build_densenet121(_log, weights: str, frozen: bool, num_classes: int, drop_r
     if frozen:
         for param in densenet.parameters():
             param.requires_grad = False
-        densenet.classifier.requires_grad = True
+        # only unlock classifier
+        for param in densenet.classifier.parameters():
+            param.requires_grad = True
 
     return nn.Sequential(
-        densenet,
-        nn.Sigmoid() if num_classes == 1 else nn.Softmax()
+            densenet,
+            nn.Sigmoid() if num_classes == 1 else nn.Softmax()
     )
