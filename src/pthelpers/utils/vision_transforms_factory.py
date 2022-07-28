@@ -35,9 +35,6 @@ def generate_train_transforms(_config):
     if "resize" in _config and _config["resize"]:
         trafos.append(transforms.Resize((_config["resize"]["width"], _config["resize"]["height"])))
 
-    if "normalize" in _config and _config["normalize"]:
-        trafos.append(transforms.Normalize(_config["normalize"]["mean"], _config["normalize"]["std"]))
-
     if "rotate" in _config and _config["rotate"]:
         trafos.append(transforms.RandomRotation(_config["rotate"]))
 
@@ -54,6 +51,9 @@ def generate_train_transforms(_config):
                 _config["perspective"]["probability"] if "probability" in _config["perspective"] else 0))
 
     trafos.append(transforms.ToTensor())
+
+    if "normalize" in _config and _config["normalize"]:
+        trafos.append(transforms.Normalize(_config["normalize"]["mean"], _config["normalize"]["std"]))
 
     if "force_3ch" in _config and _config["force_3ch"]:
         trafos.append(transforms.Lambda(lambda x: x.repeat(3, 1, 1) if x.shape[0] == 1 else x))
