@@ -249,20 +249,25 @@ class Trainer:
             for metric in self.__val_metrics.values():
                 metric.update(y_hat, y.int())
 
-        self.results["loss"] = loss / len(self.__validation_dataloader)
-        _run.log_scalar(prefix + "loss", self.results["loss"], step)
+        _run.log_scalar(prefix + "loss", loss / len(self.__validation_dataloader), step)
         for name, metric in self.__val_metrics.items():
-            self.results[name] = metric.compute().item() / len(self.__validation_dataloader)
-            _run.log_scalar(prefix + name, self.results[name], step)
+            _run.log_scalar(prefix + name, metric.compute().item() / len(self.__validation_dataloader), step)
+
+        if self.__best_validation_loss is None or loss < self.__best_validation_loss:
+            self.results["atStep"] = step
+            self.results["loss"] = loss / len(self.__validation_dataloader)
+            for name, metric in self.__val_metrics.items():
+                self.results[name] = metric.compute().item() / len(self.__validation_dataloader)
+
+            _log.info(f'found new best validation loss, {self.__best_validation_loss} vs. {loss}')
+            self.__best_validation_loss = loss
+            self.__save__(name='best.pth', loss=loss)
+
+        for name, metric in self.__val_metrics.items():
             metric.reset()
 
         # save in trained state!
         self.model.train()
-
-        if self.__best_validation_loss is None or loss < self.__best_validation_loss:
-            _log.info(f'found new best validation loss, {self.__best_validation_loss} vs. {loss}')
-            self.__best_validation_loss = loss
-            self.__save__(name='best.pth', loss=loss)
 
 
     @trainer_ingredient.capture
