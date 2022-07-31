@@ -29,7 +29,8 @@ def build_densenet(_log, growth_rate: int, block_config: Tuple[int, int, int, in
 
 @model_builder_ingredient.capture(prefix='densenet121')
 def build_densenet121(_log, weights: str, frozen: bool, num_classes: int, drop_rate: float = 0):
-    densenet = densenet121(weights=DenseNet121_Weights[weights], num_classes=1000 if weights else num_classes, drop_rate=drop_rate)
+    densenet = densenet121(weights=DenseNet121_Weights[weights] if weights else None,
+                           num_classes=1000 if weights else num_classes, drop_rate=drop_rate)
 
     if weights and num_classes != 1000:
         num_ftrs = densenet.classifier.in_features
@@ -49,11 +50,12 @@ def build_densenet121(_log, weights: str, frozen: bool, num_classes: int, drop_r
 
 
 @model_builder_ingredient.capture(prefix='efficientnet_b0')
-def build_efficientnetB0(_log, weights: str, frozen: bool, num_classes: int):
-    efficientnet = efficientnet_b0(weights=EfficientNet_B0_Weights[weights], num_classes=1000 if weights else num_classes)
+def build_efficientnetB0(_log, weights: str = None, frozen: bool= False, num_classes: int = 1000):
+    efficientnet = efficientnet_b0(weights=EfficientNet_B0_Weights[weights] if weights else None,
+                                   num_classes=1000 if weights else num_classes)
 
     if weights and num_classes != 1000:
-        num_ftrs = efficientnet.classifier.in_features
+        num_ftrs = efficientnet.classifier[1].in_features
         efficientnet.classifier = nn.Sequential(
                 nn.Dropout(p=0.2, inplace=True),
                 nn.Linear(num_ftrs, num_classes),
