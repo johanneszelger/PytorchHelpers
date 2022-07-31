@@ -4,7 +4,7 @@ from torchvision.models import DenseNet, densenet121, DenseNet121_Weights, Effic
     efficientnet_b3, EfficientNet_B3_Weights
 from typing import Tuple
 
-from pthelpers.models.fpn import resnet50_fpn
+from pthelpers.models.resnet_fpn import resnet50_fpn
 
 model_builder_ingredient = Ingredient('model')
 

@@ -75,7 +75,7 @@ class Bottleneck(nn.Module):
 
 
 class FPN(nn.Module):
-    def __init__(self, block, num_blocks):
+    def __init__(self, block, num_blocks, num_classes=1000):
         super(FPN, self).__init__()
         self.in_planes = 64
 
@@ -100,6 +100,12 @@ class FPN(nn.Module):
         self.latlayer1 = nn.Conv2d(1024, 256, kernel_size=1, stride=1, padding=0)
         self.latlayer2 = nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0)
         self.latlayer3 = nn.Conv2d(256, 256, kernel_size=1, stride=1, padding=0)
+
+        # Classifiers
+        self.classifierP2 = nn.Linear(256, num_classes)
+        self.classifierP3 = nn.Linear(256, num_classes)
+        self.classifierP4 = nn.Linear(256, num_classes)
+        self.classifierP5 = nn.Linear(256, num_classes)
 
 
     def _make_layer(self, block, planes, num_blocks, stride):
@@ -148,7 +154,13 @@ class FPN(nn.Module):
         p4 = self.smooth1(p4)
         p3 = self.smooth2(p3)
         p2 = self.smooth3(p2)
-        return p2, p3, p4, p5
+
+        pred2 = self.classifierP2(p2)
+        pred3 = self.classifierP2(p3)
+        pred4 = self.classifierP2(p4)
+        pred5 = self.classifierP2(p5)
+
+        return pred2, pred3, pred4, pred5
 
 
 def resnet18_fpn():
