@@ -100,7 +100,7 @@ def build_efficientnetB3(_log, weights: str = None, frozen: bool= False, num_cla
     )
 
 @model_builder_ingredient.capture(prefix='resnet50')
-def build_resnet50(_log, weights: str, frozen: bool, num_classes: int, drop_rate: float):
+def build_resnet50(_log, weights: str, frozen: bool, num_classes: int):
     resnet = resnet50(weights, num_classes)
 
     if weights and num_classes != 1000:
