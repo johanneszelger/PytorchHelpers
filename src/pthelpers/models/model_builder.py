@@ -49,13 +49,13 @@ def build_densenet121(_log, weights: str, frozen: bool, num_classes: int, drop_r
 
 
 @model_builder_ingredient.capture(prefix='efficientnet_b0')
-def build_efficientnetB0(_log, weights: str, frozen: bool, num_classes: int, drop_rate: float):
-    efficientnet = efficientnet_b0(weights=EfficientNet_B0_Weights[weights], num_classes=1000 if weights else num_classes, drop_rate=drop_rate)
+def build_efficientnetB0(_log, weights: str, frozen: bool, num_classes: int):
+    efficientnet = efficientnet_b0(weights=EfficientNet_B0_Weights[weights], num_classes=1000 if weights else num_classes)
 
     if weights and num_classes != 1000:
         num_ftrs = efficientnet.classifier.in_features
         efficientnet.classifier = nn.Sequential(
-                nn.Dropout(p=drop_rate, inplace=True),
+                nn.Dropout(p=0.2, inplace=True),
                 nn.Linear(num_ftrs, num_classes),
         )
 
