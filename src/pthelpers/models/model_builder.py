@@ -1,6 +1,7 @@
 from sacred import Ingredient
 from torch import nn
-from torchvision.models import DenseNet, densenet121, DenseNet121_Weights, EfficientNet, efficientnet_b0, EfficientNet_B0_Weights, resnet50
+from torchvision.models import DenseNet, densenet121, DenseNet121_Weights, EfficientNet, efficientnet_b0, EfficientNet_B0_Weights, resnet50, \
+    efficientnet_b3, EfficientNet_B3_Weights
 from typing import Tuple
 
 from pthelpers.models.fpn import resnet50_fpn
@@ -13,6 +14,7 @@ def build_model(_log, model_name):
     if model_name == 'Densenet': return build_densenet()
     if model_name == 'Densenet121': return build_densenet121()
     if model_name == 'EfficientnetB0': return build_efficientnetB0()
+    if model_name == 'EfficientnetB3': return build_efficientnetB3()
     if model_name == 'Resnet50': return build_resnet50()
 
 
@@ -52,6 +54,30 @@ def build_densenet121(_log, weights: str, frozen: bool, num_classes: int, drop_r
 @model_builder_ingredient.capture(prefix='efficientnet_b0')
 def build_efficientnetB0(_log, weights: str = None, frozen: bool= False, num_classes: int = 1000):
     efficientnet = efficientnet_b0(weights=EfficientNet_B0_Weights[weights] if weights else None,
+                                   num_classes=1000 if weights else num_classes)
+
+    if weights and num_classes != 1000:
+        num_ftrs = efficientnet.classifier[1].in_features
+        efficientnet.classifier = nn.Sequential(
+                nn.Dropout(p=0.2, inplace=True),
+                nn.Linear(num_ftrs, num_classes),
+        )
+
+    if frozen:
+        for param in efficientnet.parameters():
+            param.requires_grad = False
+        # only unlock classifier
+        for param in efficientnet.classifier.parameters():
+            param.requires_grad = True
+
+    return nn.Sequential(
+            efficientnet,
+            nn.Sigmoid() if num_classes == 1 else nn.Softmax()
+    )
+
+@model_builder_ingredient.capture(prefix='efficientnet_b3')
+def build_efficientnetB3(_log, weights: str = None, frozen: bool= False, num_classes: int = 1000):
+    efficientnet = efficientnet_b3(weights=EfficientNet_B3_Weights[weights] if weights else None,
                                    num_classes=1000 if weights else num_classes)
 
     if weights and num_classes != 1000:
