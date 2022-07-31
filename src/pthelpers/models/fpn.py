@@ -181,14 +181,8 @@ def resnet152_fpn():
     return FPN(Bottleneck, [[3, 8, 36, 3]])
 
 
-resnet
-
-
 def test():
     net = resnet50_fpn()
     fms = net(Variable(torch.randn(1, 3, 600, 900)))
     for fm in fms:
         print(fm.size())
-
-
-test()
