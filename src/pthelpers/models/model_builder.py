@@ -12,7 +12,7 @@ model_builder_ingredient = Ingredient('model')
 def build_model(_log, model_name):
     if model_name == 'Densenet': return build_densenet()
     if model_name == 'Densenet121': return build_densenet121()
-    if model_name == 'EfficientNetB0': return build_efficientnetB0()
+    if model_name == 'EfficientnetB0': return build_efficientnetB0()
     if model_name == 'Resnet50': return build_resnet50()
 
 
