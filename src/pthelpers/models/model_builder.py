@@ -51,7 +51,7 @@ def build_densenet121(_log, weights: str, frozen: bool, num_classes: int, drop_r
     )
 
 
-@model_builder_ingredient.capture(prefix='efficientnet_b0')
+@model_builder_ingredient.capture(prefix='efficientnetB0')
 def build_efficientnetB0(_log, weights: str = None, frozen: bool= False, num_classes: int = 1000):
     efficientnet = efficientnet_b0(weights=EfficientNet_B0_Weights[weights] if weights else None,
                                    num_classes=1000 if weights else num_classes)
@@ -75,7 +75,7 @@ def build_efficientnetB0(_log, weights: str = None, frozen: bool= False, num_cla
             nn.Sigmoid() if num_classes == 1 else nn.Softmax()
     )
 
-@model_builder_ingredient.capture(prefix='efficientnet_b3')
+@model_builder_ingredient.capture(prefix='efficientnetB3')
 def build_efficientnetB3(_log, weights: str = None, frozen: bool= False, num_classes: int = 1000):
     efficientnet = efficientnet_b3(weights=EfficientNet_B3_Weights[weights] if weights else None,
                                    num_classes=1000 if weights else num_classes)
