@@ -2,7 +2,10 @@ import numpy as np
 from sklearn import metrics
 from torch.utils.data import DataLoader
 
-from src.pthelpers.training.trainer import Trainer
+try:
+    from pthelpers.training.trainer import Trainer
+except:
+    from src.pthelpers.training.trainer import Trainer
 
 
 def calc_auc(data_loader: DataLoader, model, checkpoint: str, use_gpu: bool = True):
@@ -26,4 +29,3 @@ def calc_auc(data_loader: DataLoader, model, checkpoint: str, use_gpu: bool = Tr
         roc_aucs.append(metrics.auc(fpr, tpr))
 
     return roc_aucs
-
