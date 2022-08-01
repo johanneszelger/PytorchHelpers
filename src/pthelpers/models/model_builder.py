@@ -102,7 +102,7 @@ def build_efficientnetB3(_log, weights: str = None, frozen: bool= False, num_cla
 
 @model_builder_ingredient.capture(prefix='resnet50')
 def build_resnet50(_log, weights: str, frozen: bool, num_classes: int):
-    resnet = resnet50(ResNet50_Weights[weights], num_classes)
+    resnet = resnet50(weights=ResNet50_Weights[weights], num_classes=1000 if weights else num_classes)
 
     if weights and num_classes != 1000:
         num_ftrs = resnet.fc.in_features
@@ -124,7 +124,7 @@ def build_resnet50(_log, weights: str, frozen: bool, num_classes: int):
 
 @model_builder_ingredient.capture(prefix='resnet152')
 def build_resnet152(_log, weights: str, frozen: bool, num_classes: int):
-    resnet = resnet152(weights=weights, num_classes=num_classes)
+    resnet = resnet152(weights=ResNet152_Weights[weights], num_classes=1000 if weights else num_classes)
 
     if weights and num_classes != 1000:
         num_ftrs = resnet.fc.in_features
