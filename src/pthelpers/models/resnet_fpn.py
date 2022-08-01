@@ -160,7 +160,7 @@ class FPN(nn.Module):
         pred4 = self.classifierP2(p4)
         pred5 = self.classifierP2(p5)
 
-        return pred2, pred3, pred4, pred5
+        return pred2 + pred3 + pred4 + pred5
 
 
 def resnet18_fpn():
