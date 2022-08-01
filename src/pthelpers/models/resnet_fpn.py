@@ -165,6 +165,11 @@ class FPN(nn.Module):
         p3 = self.avgPoolP5(p3)
         p2 = self.avgPoolP5(p2)
 
+        p5 = torch.flatten(p5, 1)
+        p4 = torch.flatten(p4, 1)
+        p3 = torch.flatten(p3, 1)
+        p2 = torch.flatten(p2, 1)
+
         pred2 = self.classifierP2(p2)
         pred3 = self.classifierP2(p3)
         pred4 = self.classifierP2(p4)
