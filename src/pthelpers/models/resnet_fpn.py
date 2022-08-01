@@ -101,6 +101,11 @@ class FPN(nn.Module):
         self.latlayer2 = nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0)
         self.latlayer3 = nn.Conv2d(256, 256, kernel_size=1, stride=1, padding=0)
 
+        self.avgPoolP2 = nn.AdaptiveAvgPool2d((1, 1))
+        self.avgPoolP3 = nn.AdaptiveAvgPool2d((1, 1))
+        self.avgPoolP4 = nn.AdaptiveAvgPool2d((1, 1))
+        self.avgPoolP5 = nn.AdaptiveAvgPool2d((1, 1))
+
         # Classifiers
         self.classifierP2 = nn.Linear(256, num_classes)
         self.classifierP3 = nn.Linear(256, num_classes)
@@ -154,6 +159,11 @@ class FPN(nn.Module):
         p4 = self.smooth1(p4)
         p3 = self.smooth2(p3)
         p2 = self.smooth3(p2)
+
+        p5 = self.avgPoolP5(p5)
+        p4 = self.avgPoolP5(p4)
+        p3 = self.avgPoolP5(p3)
+        p2 = self.avgPoolP5(p2)
 
         pred2 = self.classifierP2(p2)
         pred3 = self.classifierP2(p3)
