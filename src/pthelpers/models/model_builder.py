@@ -1,7 +1,7 @@
 from sacred import Ingredient
 from torch import nn
 from torchvision.models import DenseNet, densenet121, DenseNet121_Weights, EfficientNet, efficientnet_b0, EfficientNet_B0_Weights, resnet50, \
-    efficientnet_b3, EfficientNet_B3_Weights
+    efficientnet_b3, EfficientNet_B3_Weights, resnet152
 from typing import Tuple
 
 from pthelpers.models.resnet_fpn import resnet50_fpn
@@ -120,6 +120,29 @@ def build_resnet50(_log, weights: str, frozen: bool, num_classes: int):
             resnet,
             nn.Sigmoid() if num_classes == 1 else nn.Softmax()
     )
+
+@model_builder_ingredient.capture(prefix='resnet152')
+def build_resnet152(_log, weights: str, frozen: bool, num_classes: int):
+    resnet = resnet152(weights, num_classes)
+
+    if weights and num_classes != 1000:
+        num_ftrs = resnet.fc.in_features
+        resnet.fc = nn.Sequential(
+                nn.Linear(num_ftrs, num_classes),
+        )
+
+    if frozen:
+        for param in resnet.parameters():
+            param.requires_grad = False
+        # only unlock classifier
+        for param in resnet.fc.parameters():
+            param.requires_grad = True
+
+    return nn.Sequential(
+            resnet,
+            nn.Sigmoid() if num_classes == 1 else nn.Softmax()
+    )
+
 @model_builder_ingredient.capture(prefix='resnet50_fpn')
 def build_resnet50_fpn(_log, weights: str, num_classes: int):
     resnet_fpn = resnet50_fpn()
