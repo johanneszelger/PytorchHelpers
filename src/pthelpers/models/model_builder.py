@@ -16,6 +16,7 @@ def build_model(_log, model_name):
     if model_name == 'EfficientnetB0': return build_efficientnetB0()
     if model_name == 'EfficientnetB3': return build_efficientnetB3()
     if model_name == 'Resnet50': return build_resnet50()
+    if model_name == 'Resnet152': return build_resnet152()
 
 
 @model_builder_ingredient.capture(prefix='densenet')
