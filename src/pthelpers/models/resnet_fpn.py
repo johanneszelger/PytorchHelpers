@@ -107,10 +107,12 @@ class FPN(nn.Module):
         self.avgPoolP5 = nn.AdaptiveAvgPool2d((1, 1))
 
         # Classifiers
-        self.classifierP2 = nn.Linear(256, num_classes)
-        self.classifierP3 = nn.Linear(256, num_classes)
-        self.classifierP4 = nn.Linear(256, num_classes)
-        self.classifierP5 = nn.Linear(256, num_classes)
+        self.classifierP2 = nn.Sequential(nn.Dropout(0.5), nn.Linear(256, num_classes))
+        self.classifierP3 = nn.Sequential(nn.Dropout(0.5), nn.Linear(256, num_classes))
+        self.classifierP4 = nn.Sequential(nn.Dropout(0.5), nn.Linear(256, num_classes))
+        self.classifierP5 = nn.Sequential(nn.Dropout(0.5), nn.Linear(256, num_classes))
+
+        self.classifier = nn.Linear(4, num_classes)
 
 
     def _make_layer(self, block, planes, num_blocks, stride):
@@ -139,7 +141,7 @@ class FPN(nn.Module):
         So we choose bilinear upsample which supports arbitrary output sizes.
         '''
         _, _, H, W = y.size()
-        return F.upsample(x, size=(H, W), mode='bilinear') + y
+        return F.interpolate(x, size=(H, W), mode='bilinear') + y
 
 
     def forward(self, x):
@@ -175,7 +177,9 @@ class FPN(nn.Module):
         pred4 = self.classifierP2(p4)
         pred5 = self.classifierP2(p5)
 
-        return pred2 + pred3 + pred4 + pred5
+        pred = self.classifier(torch.concat([pred2, pred3, pred4, pred5]))
+
+        return pred
 
 
 def resnet18_fpn(num_classes: int):
