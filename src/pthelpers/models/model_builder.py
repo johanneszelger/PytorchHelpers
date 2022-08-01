@@ -124,7 +124,7 @@ def build_resnet50(_log, weights: str, frozen: bool, num_classes: int):
 
 @model_builder_ingredient.capture(prefix='resnet152')
 def build_resnet152(_log, weights: str, frozen: bool, num_classes: int):
-    resnet = resnet152(ResNet152_Weights[weights], num_classes)
+    resnet = resnet152(weights=weights, num_classes=num_classes)
 
     if weights and num_classes != 1000:
         num_ftrs = resnet.fc.in_features
