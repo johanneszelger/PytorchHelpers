@@ -114,7 +114,7 @@ class Trainer:
 
         self.model = model
         self.__train_dataloader = train_dataloader
-        self.dl_len = len(self.__train_dataloader)
+        self.dl_len = len(self.__train_dataloader) if self.__train_dataloader else 0
         self.__validation_dataloader = validation_dataloader
         self.loss_fn = loss_fn
         self.optimizer = optimizer
@@ -334,8 +334,9 @@ class Trainer:
 
     @staticmethod
     def test(model: Module, checkpoint: str, dataloader: DataLoader = None, use_gpu: bool = False):
-        trainer = Trainer(model)
+        trainer = Trainer(model, ignore_errors=True)
         trainer.test(checkpoint, dataloader, use_gpu)
+
     def test(self, checkpoint: str, dataloader: DataLoader = None, use_gpu: bool = False):
         if not checkpoint:
             raise ValueError("checkpoint required")
