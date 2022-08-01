@@ -7,7 +7,7 @@ import dill
 import torch
 from sacred import Ingredient
 from sacred.run import Run
-from torch.nn import Module, BCELoss
+from torch.nn import Module, BCELoss, Sequential
 from torch.optim import Optimizer, Adam
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy
@@ -310,9 +310,13 @@ class Trainer:
     def load(self, cp_dir: str) -> None:
         checkpoint = torch.load(cp_dir)
         self.__epoch = checkpoint['epoch'] + 1
-        self.model.load_state_dict(checkpoint['state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.__best_validation_loss = checkpoint['best_loss']
+
+        if isinstance(self.model, Sequential):
+            self.model[0].load_state_dict(checkpoint['state_dict'][0])
+        else:
+            self.model.load_state_dict(checkpoint['state_dict'])
 
 
     @trainer_ingredient.capture
