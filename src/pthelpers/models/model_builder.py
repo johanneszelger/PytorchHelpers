@@ -1,7 +1,7 @@
 from sacred import Ingredient
 from torch import nn
 from torchvision.models import DenseNet, densenet121, DenseNet121_Weights, EfficientNet, efficientnet_b0, EfficientNet_B0_Weights, resnet50, \
-    efficientnet_b3, EfficientNet_B3_Weights, resnet152
+    efficientnet_b3, EfficientNet_B3_Weights, resnet152, ResNet50_Weights, ResNet152_Weights
 from typing import Tuple
 
 from pthelpers.models.resnet_fpn import resnet50_fpn
@@ -102,7 +102,7 @@ def build_efficientnetB3(_log, weights: str = None, frozen: bool= False, num_cla
 
 @model_builder_ingredient.capture(prefix='resnet50')
 def build_resnet50(_log, weights: str, frozen: bool, num_classes: int):
-    resnet = resnet50(weights, num_classes)
+    resnet = resnet50(ResNet50_Weights[weights], num_classes)
 
     if weights and num_classes != 1000:
         num_ftrs = resnet.fc.in_features
@@ -124,7 +124,7 @@ def build_resnet50(_log, weights: str, frozen: bool, num_classes: int):
 
 @model_builder_ingredient.capture(prefix='resnet152')
 def build_resnet152(_log, weights: str, frozen: bool, num_classes: int):
-    resnet = resnet152(weights, num_classes)
+    resnet = resnet152(ResNet152_Weights[weights], num_classes)
 
     if weights and num_classes != 1000:
         num_ftrs = resnet.fc.in_features
