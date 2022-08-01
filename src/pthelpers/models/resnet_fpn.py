@@ -107,10 +107,10 @@ class FPN(nn.Module):
         self.avgPoolP5 = nn.AdaptiveAvgPool2d((1, 1))
 
         # Classifiers
-        self.classifierP2 = nn.Sequential(nn.Dropout(0.5), nn.Linear(256, num_classes))
-        self.classifierP3 = nn.Sequential(nn.Dropout(0.5), nn.Linear(256, num_classes))
-        self.classifierP4 = nn.Sequential(nn.Dropout(0.5), nn.Linear(256, num_classes))
-        self.classifierP5 = nn.Sequential(nn.Dropout(0.5), nn.Linear(256, num_classes))
+        self.classifierP2 = nn.Sequential(nn.Dropout(0.5), nn.Linear(256, num_classes), nn.ReLU())
+        self.classifierP3 = nn.Sequential(nn.Dropout(0.5), nn.Linear(256, num_classes), nn.ReLU())
+        self.classifierP4 = nn.Sequential(nn.Dropout(0.5), nn.Linear(256, num_classes), nn.ReLU())
+        self.classifierP5 = nn.Sequential(nn.Dropout(0.5), nn.Linear(256, num_classes), nn.ReLU())
 
         self.classifier = nn.Linear(4, num_classes)
 
