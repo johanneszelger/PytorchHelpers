@@ -173,34 +173,34 @@ class FPN(nn.Module):
         return pred2 + pred3 + pred4 + pred5
 
 
-def resnet18_fpn():
+def resnet18_fpn(num_classes: int):
     """Constructs a ResNet-18 model. With a FPN
     """
-    return FPN(BasicBlock, [2, 2, 2, 2])
+    return FPN(BasicBlock, [2, 2, 2, 2], num_classes=num_classes)
 
 
-def resnet34_fpn():
+def resnet34_fpn(num_classes: int):
     """Constructs a ResNet-34 model. With a FPN
     """
-    return FPN(BasicBlock, [3, 4, 6, 3])
+    return FPN(BasicBlock, [3, 4, 6, 3], num_classes=num_classes)
 
 
-def resnet50_fpn():
+def resnet50_fpn(num_classes: int):
     """Constructs a ResNet-50 model. With a FPN
     """
-    return FPN(Bottleneck, [3, 4, 6, 3])
+    return FPN(Bottleneck, [3, 4, 6, 3], num_classes=num_classes)
 
 
-def resnet101_fpn():
+def resnet101_fpn(num_classes: int):
     """Constructs a ResNet-101 model. With a FPN
     """
-    return FPN(Bottleneck, [3, 4, 23, 3])
+    return FPN(Bottleneck, [3, 4, 23, 3], num_classes=num_classes)
 
 
-def resnet152_fpn():
+def resnet152_fpn(num_classes: int):
     """Constructs a ResNet-152 model. With a FPN
     """
-    return FPN(Bottleneck, [[3, 8, 36, 3]])
+    return FPN(Bottleneck, [[3, 8, 36, 3]], num_classes=num_classes)
 
 
 def test():

@@ -147,7 +147,7 @@ def build_resnet152(_log, weights: str, frozen: bool, num_classes: int):
 
 @model_builder_ingredient.capture(prefix='resnet50_fpn')
 def build_resnet50_fpn(_log, num_classes: int):
-    resnet_fpn = resnet50_fpn()
+    resnet_fpn = resnet50_fpn(num_classes)
 
     return nn.Sequential(
             resnet_fpn,
