@@ -352,6 +352,8 @@ class Trainer:
         self.load(checkpoint, device)
         self.model.eval()
 
+        gt = torch.IntTensor().to(device)
+        pred = torch.FloatTensor().to(device)
         self.model.to(device)
         with torch.no_grad():
             for i, (X, target) in enumerate(dataloader):
