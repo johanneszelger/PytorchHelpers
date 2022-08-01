@@ -318,7 +318,7 @@ class Trainer:
         self.__best_validation_loss = checkpoint['best_loss']
 
         if isinstance(self.model, Sequential):
-            self.model[0].load_state_dict(checkpoint['state_dict'][0])
+            self.model[0].load_state_dict({k[2:]: v for (k,v) in checkpoint['state_dict'].items()})
         else:
             self.model.load_state_dict(checkpoint['state_dict'])
 
