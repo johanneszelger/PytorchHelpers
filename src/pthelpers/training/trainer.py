@@ -140,12 +140,7 @@ class Trainer:
 
         # send all to device here
         device = "cuda" if torch.cuda.is_available() and _config["use_gpu"] else "cpu"
-        self.model.to(device)
-        self.loss_fn.to(device)
-        for metric in self.metrics.values():
-            metric.to(device)
-        for metric in self.__val_metrics.values():
-            metric.to(device)
+        self.send_all_to_device(device)
 
         # load existing here
         self.__load_existing_cp__()
@@ -208,6 +203,15 @@ class Trainer:
         _log.info('Finished Training')
         self.clean_checkpoints()
         return self.results
+
+
+    def send_all_to_device(self, device):
+        self.model.to(device)
+        self.loss_fn.to(device)
+        for metric in self.metrics.values():
+            metric.to(device)
+        for metric in self.__val_metrics.values():
+            metric.to(device)
 
 
     def log_training(self, _config, _run, i, running_metric_results):
@@ -347,6 +351,7 @@ class Trainer:
         self.model.eval()
 
         device = "cuda" if torch.cuda.is_available() and use_gpu else "cpu"
+        self.model.to(device)
         with torch.no_grad():
             for i, (X, target) in enumerate(dataloader):
                 target = target.to(device)
