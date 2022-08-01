@@ -337,7 +337,7 @@ class Trainer:
             param.requires_grad = True
 
     @staticmethod
-    def test(model: Module, checkpoint: str, dataloader: DataLoader = None, use_gpu: bool = False):
+    def test_static(model: Module, checkpoint: str, dataloader: DataLoader = None, use_gpu: bool = False):
         trainer = Trainer(model, ignore_errors=True)
         trainer.test(checkpoint, dataloader, use_gpu)
 

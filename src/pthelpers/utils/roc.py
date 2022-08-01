@@ -18,7 +18,7 @@ def calc_auc(data_loader: DataLoader, model, checkpoint: str, use_gpu: bool = Tr
     :return:
     """
 
-    gt, pred = Trainer.test(model, checkpoint, data_loader, use_gpu)
+    gt, pred = Trainer.test_static(model, checkpoint, data_loader, use_gpu)
     gt, pred = gt.int().cpu().numpy(), pred.cpu().numpy()
     if gt.ndim < 2:
         gt = np.eye(pred.shape[1], dtype='uint8')[gt]
