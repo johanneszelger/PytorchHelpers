@@ -124,7 +124,7 @@ class Trainer:
         self.__best_validation_loss = None
         self.__epoch = 0
 
-        self.batch_size = self.__train_dataloader.batch_size
+        self.batch_size = self.__train_dataloader.batch_size if self.__train_dataloader else 0
 
         self.results = {}
 
