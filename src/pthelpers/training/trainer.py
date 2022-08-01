@@ -7,7 +7,8 @@ import dill
 import torch
 from sacred import Ingredient
 from sacred.run import Run
-from torch.optim import Optimizer
+from torch.nn import Module, BCELoss
+from torch.optim import Optimizer, Adam
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy
 from tqdm import tqdm
@@ -73,6 +74,7 @@ class Trainer:
                  # eval_first: bool = False,
                  # class_names: [] = None,
                  # use_gpu: bool = True \
+                 ignore_errors:bool = False,
                  _config=None) -> None:
         """
         :param model: the model to train
@@ -98,13 +100,13 @@ class Trainer:
         #     if gpu acceleration shall be used
         """
 
-        if model is None:
+        if model is None and not ignore_errors:
             raise ValueError("Model must be defined")
-        if train_dataloader is None:
+        if train_dataloader is None and not ignore_errors:
             raise ValueError("Train DL must be defined")
-        if loss_fn is None:
+        if loss_fn is None and not ignore_errors:
             raise ValueError("Loss must be defined")
-        if optimizer is None:
+        if optimizer is None and not ignore_errors:
             raise ValueError("Optimizer must be defined")
 
         if metrics is None:
@@ -144,7 +146,6 @@ class Trainer:
             metric.to(device)
         for metric in self.__val_metrics.values():
             metric.to(device)
-
 
         # load existing here
         self.__load_existing_cp__()
@@ -326,3 +327,30 @@ class Trainer:
     def __unfreeze_model__(self):
         for param in self.model.parameters():
             param.requires_grad = True
+
+    @staticmethod
+    def test(model: Module, checkpoint: str, dataloader: DataLoader = None, use_gpu: bool = False):
+        trainer = Trainer(model)
+        trainer.test(checkpoint, dataloader, use_gpu)
+    def test(self, checkpoint: str, dataloader: DataLoader = None, use_gpu: bool = False):
+        if not checkpoint:
+            raise ValueError("checkpoint required")
+        if not dataloader:
+            dataloader = self.__validation_dataloader
+
+        self.load(checkpoint)
+        self.model.eval()
+
+        device = "cuda" if torch.cuda.is_available() and use_gpu else "cpu"
+        with torch.no_grad():
+            for i, (X, target) in enumerate(dataloader):
+                target = target.to(device)
+                gt = torch.cat((gt, target), 0)
+
+                bs, c, h, w = X.size()
+                X = X.view(-1, c, h, w).to(device)
+
+                out = self.model(X)
+                pred = torch.cat((pred, out), 0)
+
+        return gt, pred
