@@ -177,7 +177,7 @@ class FPN(nn.Module):
         pred4 = self.classifierP2(p4)
         pred5 = self.classifierP2(p5)
 
-        pred = self.classifier(torch.concat([pred2, pred3, pred4, pred5]))
+        pred = self.classifier(torch.cat([pred2, pred3, pred4, pred5], dim=1))
 
         return pred
 
