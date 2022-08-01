@@ -43,7 +43,7 @@ class Trainer:
 
 
     @trainer_ingredient.capture()
-    def __load_existing_cp__(self, _log) -> None:
+    def __load_existing_cp__(self, _log, use_gpu) -> None:
         cp_dir = self.__get_final_cp_dir__()
         if not cp_dir:
             return None
@@ -55,7 +55,7 @@ class Trainer:
         last_epoch = max(epochs)
 
         _log.info(f'Found existing checkpoint: checkpoint_{last_epoch}.pth in {cp_dir}')
-        self.load(osp.join(cp_dir, f"checkpoint_{last_epoch}.pth"))
+        self.load(osp.join(cp_dir, f"checkpoint_{last_epoch}.pth"), use_gpu)
 
 
     @trainer_ingredient.capture()
@@ -139,7 +139,7 @@ class Trainer:
         """
 
         # send all to device here
-        device = "cuda" if torch.cuda.is_available() and _config["use_gpu"] else "cpu"
+        device = self.get_device(_config["use_gpu"])
         self.send_all_to_device(device)
 
         # load existing here
@@ -245,7 +245,7 @@ class Trainer:
         for metric in self.__val_metrics.values():
             metric.reset()
 
-        device = "cuda" if torch.cuda.is_available() and _config["use_gpu"] else "cpu"
+        device = self.get_device(_config["use_gpu"])
         loss = 0
         for x, y in self.__validation_dataloader:
             (x, y) = (x.to(device), y.to(device))
@@ -311,8 +311,8 @@ class Trainer:
                    cp_dir, pickle_module=dill)
 
 
-    def load(self, cp_dir: str) -> None:
-        checkpoint = torch.load(cp_dir)
+    def load(self, cp_dir: str, use_gpu:bool=True) -> None:
+        checkpoint = torch.load(cp_dir, map_location=self.get_device(use_gpu))
         self.__epoch = checkpoint['epoch'] + 1
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.__best_validation_loss = checkpoint['best_loss']
@@ -347,10 +347,11 @@ class Trainer:
         if not dataloader:
             dataloader = self.__validation_dataloader
 
-        self.load(checkpoint)
+        device = self.get_device(use_gpu)
+
+        self.load(checkpoint, device)
         self.model.eval()
 
-        device = "cuda" if torch.cuda.is_available() and use_gpu else "cpu"
         self.model.to(device)
         with torch.no_grad():
             for i, (X, target) in enumerate(dataloader):
@@ -364,3 +365,8 @@ class Trainer:
                 pred = torch.cat((pred, out), 0)
 
         return gt, pred
+
+
+    def get_device(self, use_gpu):
+        device = "cuda" if torch.cuda.is_available() and use_gpu else "cpu"
+        return device
