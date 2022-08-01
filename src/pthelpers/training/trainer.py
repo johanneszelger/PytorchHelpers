@@ -314,7 +314,7 @@ class Trainer:
     def load(self, cp_dir: str, use_gpu:bool=True) -> None:
         checkpoint = torch.load(cp_dir, map_location=self.get_device(use_gpu))
         self.__epoch = checkpoint['epoch'] + 1
-        self.optimizer.load_state_dict(checkpoint['optimizer'])
+        if self.optimizer: self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.__best_validation_loss = checkpoint['best_loss']
 
         if isinstance(self.model, Sequential):
