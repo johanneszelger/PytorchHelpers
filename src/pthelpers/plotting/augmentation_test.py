@@ -23,7 +23,7 @@ def show_transforms(dataloader: DataLoader, num_originals: int = 1, num_augs: in
     trafos = generate_train_transforms()
     for i, (x, y) in enumerate(dataloader):
         if i == num_originals: break
-        if isinstance(x, Tensor): x = ToPILImage()(x)
+        if isinstance(x, Tensor): x = ToPILImage()(x[0])
         aug = [ToPILImage()(trafos(x)) for _ in range(num_augs)]
 
         __plot__(x, aug)
