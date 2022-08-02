@@ -11,16 +11,15 @@ try:
 except:
     from src.pthelpers.utils.vision_transforms_factory import vision_transforms_factory_ingredient, generate_train_transforms
 
-from sacred import Experiment
+from sacred import Experiment, Ingredient
 from torch.utils.data import DataLoader
 
 plt.rcParams["savefig.bbox"] = 'tight'
 torch.manual_seed(0)
 
-aug_experiment = Experiment("aug_test", ingredients=[vision_transforms_factory_ingredient])
+aug_ingredient = Ingredient("aug_test", ingredients=[vision_transforms_factory_ingredient])
 
 
-@aug_experiment.main
 def show_transforms(dataloader: DataLoader, num_originals: int = 1, num_augs: int = 3):
     trafos = generate_train_transforms()
     for i, (x, y) in enumerate(dataloader):
@@ -57,6 +56,7 @@ def __plot__(orig, imgs, with_orig=True, row_title=None, **imshow_kwargs):
 
 
 if __name__ == '__main__':
+    ex = Experiment("test", ingredients=[vision_transforms_factory_ingredient])
     vision_transforms_factory_ingredient.add_config({
         "resize": {
             "width": 200,
@@ -65,6 +65,8 @@ if __name__ == '__main__':
         "rotate": 90
     })
 
-    data = torchvision.datasets.MNIST("./data/", download=True)
-    aug_experiment.add_config({"dataloader": data})
-    aug_experiment.run()
+
+    @ex.automain
+    def main():
+        data = torchvision.datasets.MNIST("./data/", download=True)
+        show_transforms(data)
