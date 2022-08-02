@@ -228,7 +228,7 @@ class Trainer:
             divider = _config["log_every_n_batches"]
 
         if divider:
-            _run.log_scalar("LR", self.optimizer.param_groups[0]['lr'])
+            _run.log_scalar("LR", self.optimizer.param_groups[0]['lr'], batches_total * self.batch_size)
             _run.log_scalar("loss", running_metric_results["loss"] / divider, batches_total * self.batch_size)
             running_metric_results["loss"] = 0
             for name, metric in self.metrics.items():
