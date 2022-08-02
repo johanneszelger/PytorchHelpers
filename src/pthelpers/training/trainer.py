@@ -257,7 +257,7 @@ class Trainer:
             (x, y) = (x.to(device), y.to(device))
             y_hat = self.model(x)
 
-            gt = torch.cat((gt, y), 0)
+            gt = torch.cat((gt, y.int()), 0)
             pred = torch.cat((pred, y_hat), 0)
 
             loss = self.loss_fn(y_hat, y).item()
