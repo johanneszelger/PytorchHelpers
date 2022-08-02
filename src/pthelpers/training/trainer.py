@@ -271,7 +271,7 @@ class Trainer:
         gt = gt.cpu()
         pred = pred.cpu()
         for i in range(pred.shape[1]):
-            if len(gt.shape) == 1: gt = one_hot(gt)
+            if len(gt.shape) == 1: gt = one_hot(gt.to(torch.int64))
             fpr, tpr, threshold = metrics.roc_curve(gt[:, i], pred[:, i])
             _run.log_scalar(f"AUC_{i}", metrics.auc(fpr, tpr), step)
 
