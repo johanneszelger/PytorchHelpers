@@ -8,7 +8,7 @@ class MongoDbRunReader:
         self.runs = mydb["runs"]
 
 
-    def getRun(self, runId: int):
+    def get_run(self, runId: int):
 
         myquery = {"_id": runId}
 
@@ -17,16 +17,18 @@ class MongoDbRunReader:
         return mydoc[0]
 
 
-    def compare_configs(self, run_id1: int, run_id2: int):
-        config1 = self.getRun(run_id1)["config"]
-        config2 = self.getRun(run_id2)["config"]
+    def compare_configs(self, run_id1: int, run_id2: int, print_result=True):
+        config1 = self.get_run(run_id1)["config"]
+        config2 = self.get_run(run_id2)["config"]
 
         added, removed, modified, same = self.__dict_compare__(config1, config2)
 
-        for (k, v) in added.items(): print(f"Added: {k} ({v})")
-        for (k, v) in removed.items(): print(f"Removed: {k} ({v})")
-        for (k, v) in modified.items(): print(f"Changed: {k} ({v[0]} to {v[1]})")
+        if print_result:
+            for (k, v) in added.items(): print(f"Added: {k} ({v})")
+            for (k, v) in removed.items(): print(f"Removed: {k} ({v})")
+            for (k, v) in modified.items(): print(f"Changed: {k} ({v[0]} to {v[1]})")
 
+        return added, removed, modified, same
 
     def __dict_compare__(self, d1, d2, prefix="", added=None, removed=None, modified=None, same=None):
         if not added: added = dict()
