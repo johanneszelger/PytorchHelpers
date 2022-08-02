@@ -42,9 +42,6 @@ def generate_train_transforms(_config):
     if "r_crop" in _config and _config["r_crop"]:
         trafos.append(transforms.RandomCrop((_config["r_crop"]["width"], _config["r_crop"]["height"])))
 
-    if "noise" in _config and _config["noise"]:
-        trafos.append(AddGaussianNoise(_config["noise"]["mean"], _config["noise"]["std"]))
-
     if "rotate" in _config and _config["rotate"]:
         trafos.append(transforms.RandomRotation(_config["rotate"]))
 
@@ -66,6 +63,10 @@ def generate_train_transforms(_config):
         trafos.append(transforms.RandomVerticalFlip(_config["v_flip"]))
 
     trafos.append(transforms.ToTensor())
+
+    if "noise" in _config and _config["noise"]:
+        trafos.append(AddGaussianNoise(_config["noise"]["mean"], _config["noise"]["std"]))
+        trafos.append(transforms.ToTensor())
 
     if "normalize" in _config and _config["normalize"]:
         trafos.append(transforms.Normalize(_config["normalize"]["mean"], _config["normalize"]["std"]))
