@@ -1,3 +1,4 @@
+import torch
 from sacred import Ingredient
 from torchvision.transforms import transforms
 
@@ -40,6 +41,9 @@ def generate_train_transforms(_config):
         trafos.append(transforms.RandomAdjustSharpness(_config["sharpness"]))
     if "r_crop" in _config and _config["r_crop"]:
         trafos.append(transforms.RandomCrop((_config["r_crop"]["width"], _config["r_crop"]["height"])))
+
+    if "noise" in _config and _config["noise"]:
+        trafos.append(AddGaussianNoise(_config["noise"]["std"], _config["noise"]["mean"]))
 
     if "rotate" in _config and _config["rotate"]:
         trafos.append(transforms.RandomRotation(_config["rotate"]))
@@ -85,3 +89,17 @@ def generate_test_transforms(_config):
         trafos.append(transforms.Lambda(lambda x: x.repeat(3, 1, 1) if x.shape[0] == 1 else x))
 
     return transforms.Compose(trafos)
+
+
+class AddGaussianNoise(object):
+    def __init__(self, mean=0., std=1.):
+        self.std = std
+        self.mean = mean
+
+
+    def __call__(self, tensor):
+        return tensor + torch.randn(tensor.size()) * self.std + self.mean
+
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)
