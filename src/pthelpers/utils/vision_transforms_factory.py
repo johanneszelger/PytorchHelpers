@@ -43,7 +43,7 @@ def generate_train_transforms(_config):
         trafos.append(transforms.RandomCrop((_config["r_crop"]["width"], _config["r_crop"]["height"])))
 
     if "noise" in _config and _config["noise"]:
-        trafos.append(AddGaussianNoise(_config["noise"]["std"], _config["noise"]["mean"]))
+        trafos.append(AddGaussianNoise(_config["noise"]["mean"], _config["noise"]["std"]))
 
     if "rotate" in _config and _config["rotate"]:
         trafos.append(transforms.RandomRotation(_config["rotate"]))
