@@ -34,6 +34,12 @@ def generate_train_transforms(_config):
 
     if "resize" in _config and _config["resize"]:
         trafos.append(transforms.Resize((_config["resize"]["width"], _config["resize"]["height"])))
+    if "contrast" in _config and _config["contrast"]:
+        trafos.append(transforms.RandomAutocontrast(_config["contrast"]))
+    if "sharpness" in _config and _config["sharpness"]:
+        trafos.append(transforms.RandomAdjustSharpness(_config["sharpness"]))
+    if "r_crop" in _config and _config["r_crop"]:
+        trafos.append(transforms.RandomCrop((_config["r_crop"]["width"], _config["r_crop"]["height"])))
 
     if "rotate" in _config and _config["rotate"]:
         trafos.append(transforms.RandomRotation(_config["rotate"]))
@@ -53,7 +59,7 @@ def generate_train_transforms(_config):
     if "h_flip" in _config and _config["h_flip"]:
         trafos.append(transforms.RandomHorizontalFlip(_config["h_flip"]))
     if "v_flip" in _config and _config["v_flip"]:
-        trafos.append(transforms.RandomHorizontalFlip(_config["v_flip"]))
+        trafos.append(transforms.RandomVerticalFlip(_config["v_flip"]))
 
     trafos.append(transforms.ToTensor())
 
