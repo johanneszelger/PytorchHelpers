@@ -99,7 +99,7 @@ class AddGaussianNoise(object):
 
     def __call__(self, tensor):
         res = tensor + torch.randn(tensor.size()) * self.std + self.mean
-        res = (res - res.min()) / (res.max - res.min)
+        res = (res - res.min()) / (res.max() - res.min())
         return res
 
 
