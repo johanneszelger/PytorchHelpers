@@ -50,6 +50,11 @@ def generate_train_transforms(_config):
                 _config["perspective"]["strength"] if "strength" in _config["perspective"] else 0,
                 _config["perspective"]["probability"] if "probability" in _config["perspective"] else 0))
 
+    if "h_flip" in _config and _config["h_flip"]:
+        trafos.append(transforms.RandomHorizontalFlip(_config["h_flip"]))
+    if "v_flip" in _config and _config["v_flip"]:
+        trafos.append(transforms.RandomHorizontalFlip(_config["v_flip"]))
+
     trafos.append(transforms.ToTensor())
 
     if "normalize" in _config and _config["normalize"]:
