@@ -268,6 +268,8 @@ class Trainer:
         for name, metric in self.__val_metrics.items():
             _run.log_scalar(prefix + name, metric.compute().item() / len(self.__validation_dataloader), step)
 
+        gt = gt.cpu()
+        pred = pred.cpu()
         for i in range(pred.shape[1]):
             if len(gt.shape) == 1: gt = one_hot(gt)
             fpr, tpr, threshold = metrics.roc_curve(gt[:, i], pred[:, i])
