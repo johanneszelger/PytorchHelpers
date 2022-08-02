@@ -7,17 +7,15 @@ import torchvision
 from torchvision.transforms import ToPILImage
 
 try:
-    from pthelpers.utils.vision_transforms_factory import vision_transforms_factory_ingredient, generate_train_transforms
+    from pthelpers.utils.vision_transforms_factory import generate_train_transforms, vision_transforms_factory_ingredient
 except:
-    from src.pthelpers.utils.vision_transforms_factory import vision_transforms_factory_ingredient, generate_train_transforms
+    from src.pthelpers.utils.vision_transforms_factory import generate_train_transforms, vision_transforms_factory_ingredient
 
-from sacred import Experiment, Ingredient
+from sacred import Experiment
 from torch.utils.data import DataLoader
 
 plt.rcParams["savefig.bbox"] = 'tight'
 torch.manual_seed(0)
-
-aug_ingredient = Ingredient("aug_test", ingredients=[vision_transforms_factory_ingredient])
 
 
 def show_transforms(dataloader: DataLoader, num_originals: int = 1, num_augs: int = 3):
