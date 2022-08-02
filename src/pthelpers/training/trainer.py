@@ -9,6 +9,7 @@ from sacred import Ingredient
 from sacred.run import Run
 from sklearn import metrics
 from torch.nn import Module, Sequential
+from torch.nn.functional import one_hot
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy
@@ -267,8 +268,8 @@ class Trainer:
         for name, metric in self.__val_metrics.items():
             _run.log_scalar(prefix + name, metric.compute().item() / len(self.__validation_dataloader), step)
 
-        roc_aucs = []
         for i in range(pred.shape[1]):
+            if len(gt.shape) == 1: gt = one_hot(gt)
             fpr, tpr, threshold = metrics.roc_curve(gt[:, i], pred[:, i])
             _run.log_scalar(f"AUC_{i}", metrics.auc(fpr, tpr), step)
 

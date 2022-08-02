@@ -3,6 +3,7 @@ import os.path as osp
 import shutil
 import time
 import unittest
+from unittest import mock
 from unittest.mock import MagicMock
 
 import torch.optim
@@ -10,7 +11,6 @@ import torchvision.models
 from sacred import Experiment
 from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor
-from unittest import mock
 
 from src.pthelpers.models.simple_net import Net
 from src.pthelpers.training.trainer import Trainer, trainer_ingredient
@@ -74,8 +74,8 @@ class TrainerTest(unittest.TestCase):
             trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer)
             with mock.patch.object(_run, 'log_scalar') as writer:
                 trainer.train()
-                # Loss LR (train only) and Acc after epoch for train and val
-                self.assertEqual(5, writer.call_count)
+                # Loss LR (train only) and Acc after epoch for train and val, plus AUC for 10 classes
+                self.assertEqual(5 + 10, writer.call_count)
 
 
         self.experiment.run()
@@ -87,8 +87,8 @@ class TrainerTest(unittest.TestCase):
             trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer)
             with mock.patch.object(_run, 'log_scalar') as writer:
                 trainer.train()
-                # twice Loss LR and Acc plus once val_loss and val_acc at end
-                self.assertEqual(3 + 3 + 2, writer.call_count)
+                # twice Loss LR and Acc plus once val_loss and val_acc at end, plus AUC for 10 classes
+                self.assertEqual(3 + 3 + 2 + 10, writer.call_count)
 
 
         self.experiment.run(config_updates={"trainer.log_every_n_batches": 2})
@@ -100,8 +100,8 @@ class TrainerTest(unittest.TestCase):
             trainer = Trainer(self.model, self.dataloader, self.test_dataloader, self.loss_fn, self.optimizer)
             with mock.patch.object(_run, 'log_scalar') as writer:
                 trainer.train()
-                # twice vall_loss and val_acc plus once Loss LR and Ac at end
-                self.assertEqual(2 + 2 + 3, writer.call_count)
+                # twice vall_loss and val_acc  plus AUC for 10 classes and once Loss LR and Ac at end
+                self.assertEqual(2 + 10 + 2 + 10 + 3, writer.call_count)
 
 
         self.experiment.run(config_updates={"trainer.val_every_n_batches": 2})
