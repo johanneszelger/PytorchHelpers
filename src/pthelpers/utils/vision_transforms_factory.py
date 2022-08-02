@@ -66,7 +66,6 @@ def generate_train_transforms(_config):
 
     if "noise" in _config and _config["noise"]:
         trafos.append(AddGaussianNoise(_config["noise"]["mean"], _config["noise"]["std"]))
-        trafos.append(transforms.ToTensor())
 
     if "normalize" in _config and _config["normalize"]:
         trafos.append(transforms.Normalize(_config["normalize"]["mean"], _config["normalize"]["std"]))
@@ -99,7 +98,9 @@ class AddGaussianNoise(object):
 
 
     def __call__(self, tensor):
-        return tensor + torch.randn(tensor.size()) * self.std + self.mean
+        res = tensor + torch.randn(tensor.size()) * self.std + self.mean
+        res = (res - res.min()) / (res.max - res.min)
+        return res
 
 
     def __repr__(self):
