@@ -7,8 +7,9 @@ import dill
 import torch
 from sacred import Ingredient
 from sacred.run import Run
-from torch.nn import Module, BCELoss, Sequential
-from torch.optim import Optimizer, Adam
+from sklearn import metrics
+from torch.nn import Module, Sequential
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy
 from tqdm import tqdm
@@ -202,6 +203,7 @@ class Trainer:
 
         _log.info('Finished Training')
         self.clean_checkpoints()
+
         return self.results
 
 
@@ -246,10 +248,17 @@ class Trainer:
             metric.reset()
 
         device = self.get_device(_config["use_gpu"])
+
+        gt = torch.IntTensor().to(device)
+        pred = torch.FloatTensor().to(device)
         loss = 0
         for x, y in self.__validation_dataloader:
             (x, y) = (x.to(device), y.to(device))
             y_hat = self.model(x)
+
+            gt = torch.cat((gt, y), 0)
+            pred = torch.cat((pred, y_hat), 0)
+
             loss = self.loss_fn(y_hat, y).item()
             for metric in self.__val_metrics.values():
                 metric.update(y_hat, y.int())
@@ -258,8 +267,13 @@ class Trainer:
         for name, metric in self.__val_metrics.items():
             _run.log_scalar(prefix + name, metric.compute().item() / len(self.__validation_dataloader), step)
 
+        roc_aucs = []
+        for i in range(pred.shape[1]):
+            fpr, tpr, threshold = metrics.roc_curve(gt[:, i], pred[:, i])
+            _run.log_scalar(f"AUC_{i}", metrics.auc(fpr, tpr), step)
+
         if self.__best_validation_loss is None or loss < self.__best_validation_loss:
-            self.results["atStep"] = step
+            self.results["atStep"] = f"{step} ({step / self.dl_len / self.batch_size} epochs)"
             self.results["loss"] = loss / len(self.__validation_dataloader)
             for name, metric in self.__val_metrics.items():
                 self.results[name] = metric.compute().item() / len(self.__validation_dataloader)
