@@ -19,9 +19,10 @@ class MongoDbRunReader:
         return mydoc[0]
 
 
-    def compare_run_dict(self, run_id_or_dict_1: Union[int, dict], run_id_or_dict_2: Union[int, dict], dict_name: str, print_result=True):
-        dict1 = self.get_run(run_id_or_dict_1)["dict_name"] if isinstance(run_id_or_dict_1, int) else run_id_or_dict_1
-        dict2 = self.get_run(run_id_or_dict_2)["dict_name"] if isinstance(run_id_or_dict_2, int) else run_id_or_dict_2
+    def compare_run_dict(self, run_id_or_dict_1: Union[int, dict], run_id_or_dict_2: Union[int, dict], dict_name: str = None,
+                         print_result=True):
+        dict1 = self.get_run(run_id_or_dict_1)[dict_name] if isinstance(run_id_or_dict_1, int) else run_id_or_dict_1
+        dict2 = self.get_run(run_id_or_dict_2)[dict_name] if isinstance(run_id_or_dict_2, int) else run_id_or_dict_2
 
         return self.compare_dicts(dict1, dict2, print_result)
 

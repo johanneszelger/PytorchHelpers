@@ -19,7 +19,7 @@ class MongoDBRunReaderTest(unittest.TestCase):
 
         self.reader.get_run = get_run_mock
 
-        added, removed, modified, same = self.reader.compare_configs(1, 2)
+        added, removed, modified, same = self.reader.compare_run_dict(1, 2, "config")
 
         self.assertEqual(0, len(added))
         self.assertEqual(0, len(removed))
@@ -34,7 +34,7 @@ class MongoDBRunReaderTest(unittest.TestCase):
 
         self.reader.get_run = get_run_mock
 
-        added, removed, modified, same = self.reader.compare_configs(1, 2)
+        added, removed, modified, same = self.reader.compare_run_dict(1, 2, "config")
 
         self.assertEqual(0, len(added))
         self.assertEqual(0, len(removed))
@@ -51,7 +51,7 @@ class MongoDBRunReaderTest(unittest.TestCase):
 
         self.reader.get_run = get_run_mock
 
-        added, removed, modified, same = self.reader.compare_configs(1, 2)
+        added, removed, modified, same = self.reader.compare_run_dict(1, 2, "config")
 
         self.assertEqual(0, len(added))
         self.assertEqual(0, len(removed))
@@ -72,7 +72,7 @@ class MongoDBRunReaderTest(unittest.TestCase):
 
         self.reader.get_run = get_run_mock
 
-        added, removed, modified, same = self.reader.compare_configs(1, 2)
+        added, removed, modified, same = self.reader.compare_run_dict(1, 2, "config")
 
         self.assertEqual(0, len(added))
         self.assertEqual(2, len(removed))
@@ -93,7 +93,7 @@ class MongoDBRunReaderTest(unittest.TestCase):
 
         self.reader.get_run = get_run_mock
 
-        added, removed, modified, same = self.reader.compare_configs(1, 2)
+        added, removed, modified, same = self.reader.compare_run_dict(1, 2, "config")
 
         self.assertEqual(2, len(added))
         self.assertEqual(["loss", "inner.fruit"], list(added.keys()))
@@ -103,6 +103,38 @@ class MongoDBRunReaderTest(unittest.TestCase):
         self.assertEqual(2, len(same))
         self.assertEqual(["epochs", "inner.veggie"], list(same.keys()))
         self.assertEqual([5, "carrot"], list(same.values()))
+
+
+    def test_mix(self):
+        def get_run_mock(id):
+            if id == 1:
+                return {"config": {"epochs": 5, "inner": {"veggie": "carrot"}}}
+
+
+        self.reader.get_run = get_run_mock
+
+        other_dict = {"epochs": 5, "loss": "BCE", "inner": {"veggie": "carrot", "fruit": "apple"}}
+        added, removed, modified, same = self.reader.compare_run_dict(1, other_dict, "config")
+
+        self.assertEqual(2, len(added))
+        self.assertEqual(0, len(removed))
+
+        added, removed, modified, same = self.reader.compare_run_dict(other_dict, 1, "config")
+        self.assertEqual(0, len(added))
+        self.assertEqual(2, len(removed))
+
+
+    def test_dicts(self):
+        first_dict = {"epochs": 5, "inner": {"veggie": "carrot"}}
+        other_dict = {"epochs": 5, "loss": "BCE", "inner": {"veggie": "carrot", "fruit": "apple"}}
+        added, removed, modified, same = self.reader.compare_run_dict(first_dict, other_dict, "config")
+
+        self.assertEqual(2, len(added))
+        self.assertEqual(0, len(removed))
+
+        added, removed, modified, same = self.reader.compare_run_dict(other_dict, first_dict, "config")
+        self.assertEqual(0, len(added))
+        self.assertEqual(2, len(removed))
 
 
 if __name__ == '__main__':
