@@ -21,18 +21,10 @@ class LabelCount(Metric):
             preds: Predictions from model (logits, probabilities, or labels)
             target: Ground truth labels
         """
-        if target.dim() == 1:
-            bincounts = torch.bincount(target)
-            if len(bincounts) - 1 < self.label_value:
-                return
-            self.count += bincounts[self.label_value]
-        elif target.dim() == 2:
-            for row in target:
-                if len(row) - 1 < self.label_value:
-                    return
-                self.count += row[self.label_value]
-        else:
-            raise ValueError("unknown dimension of targets, use 1D for numbers and 2D for categorical data")
+        bincounts = torch.bincount(target)
+        if len(bincounts) - 1 < self.label_value:
+            return
+        self.count += bincounts[self.label_value]
 
 
 
