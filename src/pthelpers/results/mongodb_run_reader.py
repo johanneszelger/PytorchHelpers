@@ -65,8 +65,8 @@ class MongoDbRunReader:
         if not modified: modified = dict()
         if not same: same = dict()
 
-        d1_keys = set(d1.keys())
-        d2_keys = set(d2.keys())
+        d1_keys = set(d1.keys()) if d1 else set()
+        d2_keys = set(d2.keys()) if d2 else set()
         shared_keys = d1_keys.intersection(d2_keys)
         added.update({prefix + x: d2[x] for x in d2_keys - d1_keys})
         removed.update({prefix + x: d1[x] for x in d1_keys - d2_keys})

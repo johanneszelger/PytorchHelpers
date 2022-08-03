@@ -126,6 +126,21 @@ class MongoDBRunReaderTest(unittest.TestCase):
         self.assertEqual(["carrot"], list(same.values()))
 
 
+    def test_missing(self):
+        def get_run_mock(id):
+            if id == 1:
+                return {"config": {"epochs": 5, "inner": {"veggie": "carrot"}}}
+            return {"epochs": 5, "loss": "BCE", "inner": {"veggie": "carrot", "fruit": "apple"}}
+
+
+        self.reader.get_run = get_run_mock
+
+        added, removed, modified, same = self.reader.compare_run_dict(1, 2, ["config"])
+        self.assertEqual(2, len(removed))
+        added, removed, modified, same = self.reader.compare_run_dict(2, 1, ["config"])
+        self.assertEqual(2, len(added))
+
+
     def test_mix(self):
         def get_run_mock(id):
             if id == 1:
