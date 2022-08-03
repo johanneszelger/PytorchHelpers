@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, List, Tuple
 
 import pymongo
 
@@ -19,10 +19,31 @@ class MongoDbRunReader:
         return mydoc[0]
 
 
-    def compare_run_dict(self, run_id_or_dict_1: Union[int, dict], run_id_or_dict_2: Union[int, dict], dict_name: str = None,
+    def __get_nested_value__(self, dct, *keys):
+        for key in keys:
+            try:
+                dct = dct[key]
+            except KeyError:
+                return None
+        return dct
+
+
+    def compare_run_dict(self, run_id_or_dict_1: Union[int, dict], run_id_or_dict_2: Union[int, dict],
+                         dict_names: Union[str, List[str], Tuple[str]] = None,
                          print_result=True):
-        dict1 = self.get_run(run_id_or_dict_1)[dict_name] if isinstance(run_id_or_dict_1, int) else run_id_or_dict_1
-        dict2 = self.get_run(run_id_or_dict_2)[dict_name] if isinstance(run_id_or_dict_2, int) else run_id_or_dict_2
+        if isinstance(run_id_or_dict_1, int):
+            dict1 = self.get_run(run_id_or_dict_1)
+            if isinstance(dict_names, str): dict_names = [dict_names]
+            dict1 = self.__get_nested_value__(dict1, *dict_names)
+        else:
+            dict1 = run_id_or_dict_1
+
+        if isinstance(run_id_or_dict_2, int):
+            dict2 = self.get_run(run_id_or_dict_2)
+            if isinstance(dict_names, str): dict_names = [dict_names]
+            dict2 = self.__get_nested_value__(dict2, *dict_names)
+        else:
+            dict2 = run_id_or_dict_2
 
         return self.compare_dicts(dict1, dict2, print_result)
 
