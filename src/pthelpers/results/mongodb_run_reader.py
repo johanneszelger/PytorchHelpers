@@ -1,3 +1,5 @@
+from typing import Union
+
 import pymongo
 
 
@@ -17,11 +19,15 @@ class MongoDbRunReader:
         return mydoc[0]
 
 
-    def compare_configs(self, run_id1: int, run_id2: int, print_result=True):
-        config1 = self.get_run(run_id1)["config"]
-        config2 = self.get_run(run_id2)["config"]
+    def compare_run_dict(self, run_id_or_dict_1: Union[int, dict], run_id_or_dict_2: Union[int, dict], dict_name: str, print_result=True):
+        dict1 = self.get_run(run_id_or_dict_1)["dict_name"] if isinstance(run_id_or_dict_1, int) else run_id_or_dict_1
+        dict2 = self.get_run(run_id_or_dict_2)["dict_name"] if isinstance(run_id_or_dict_2, int) else run_id_or_dict_2
 
-        added, removed, modified, same = self.__dict_compare__(config1, config2)
+        return self.compare_dicts(dict1, dict2, print_result)
+
+
+    def compare_dicts(self, dict1, dict2, print_result=True):
+        added, removed, modified, same = self.__dict_compare__(dict1, dict2)
 
         if print_result:
             for (k, v) in added.items(): print(f"Added: {k} ({v})")
@@ -29,6 +35,7 @@ class MongoDbRunReader:
             for (k, v) in modified.items(): print(f"Changed: {k} ({v[0]} to {v[1]})")
 
         return added, removed, modified, same
+
 
     def __dict_compare__(self, d1, d2, prefix="", added=None, removed=None, modified=None, same=None):
         if not added: added = dict()
