@@ -16,7 +16,10 @@ class MongoDbRunReader:
 
         mydoc = self.runs.find(myquery)
 
-        return mydoc[0]
+        try:
+            return mydoc[0]
+        except:
+            return None
 
 
     def __get_nested_value__(self, dct, *keys):
