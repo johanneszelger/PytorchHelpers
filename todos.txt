@@ -1,0 +1,21 @@
+add visuals to reading list gradcam etc
+
+add augmentation back to LR
+add dropout back to LR
+add stochstic depth back to LR
+add noise to stochsticity
+
+add plotting
+Add negative example plotting
+
+discuss control group
+
+adjust changes of protocol!
+fix PBPP
+-wait for document
+fix health council
+
+check masks
+
+
+save weights as resource?

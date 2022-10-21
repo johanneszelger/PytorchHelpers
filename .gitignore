@@ -1,0 +1,6 @@
+/.idea/
+data/
+venv
+test/chekpoints
+# Project exclude paths
+/test/checkpoints/
