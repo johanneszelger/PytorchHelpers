@@ -59,5 +59,14 @@ class Test(unittest.TestCase):
         files = os.listdir(cp_dir)
         assert len(files) == epochs, f"Expected {epochs} epoch checkpoints, got {len(files)}"
 
+    def test_train_epoch(self):
+        wandb.run.name = "test_train_epoch"
+    def test_train_logging(self):
+    def test_validation(self):
+    def test_cleanu(self):
+
+    def test_warm_start(self):
+
+
 if __name__ == '__main__':
     unittest.main()
