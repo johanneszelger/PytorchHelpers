@@ -21,7 +21,9 @@ def load_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer
     :return: None
     """
     checkpoint = torch.load(generate_run_path())
-    trainer.epoch = checkpoint['epoch'] + 1
+    trainer.epoch = checkpoint['epoch']
+    trainer.batch = checkpoint['batch']
+    trainer.sample = checkpoint['sample']
     trainer.best_validation_loss = checkpoint['best_loss']
 
     optimizer.load_state_dict(checkpoint['optimizer'])
@@ -47,6 +49,8 @@ def save_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer
         name = f"epoch_{trainer.epoch}.pth"
 
     torch.save({'epoch': trainer.epoch,
+                'batch': trainer.batch,
+                'sample': trainer.sample,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'best_loss': trainer.best_validation_loss,

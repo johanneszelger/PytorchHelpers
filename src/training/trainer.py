@@ -1,4 +1,5 @@
 import copy
+from typing import Union
 
 import torch
 import torch.nn.functional as F
@@ -54,6 +55,8 @@ class Trainer:
 
         if "log_interval_batches" not in wandb.config:
             wandb.config["log_interval_batches"] = 100
+        if "val_interval_batches" not in wandb.config:
+            wandb.config["val_interval_batches"] = None
         if "dry_run" not in wandb.config:
             wandb.config["dry_run"] = False
         if "save_every_nth_epoch" not in wandb.config and "cp_base_path" in wandb.config:
@@ -95,10 +98,12 @@ class Trainer:
         # train for x epochs
         for self.epoch in range(start_epoch, epochs + 1):
             self.__train_epoch(model, optimizer)
-            self.test(model, self.val_dl)
             if scheduler is not None:
                 scheduler.step()
-            self.__epoch_end_log()
+
+            self.__epoch_end_training_log(optimizer)
+            self.__epoch_end_validation(model, optimizer)
+
             if "save_every_nth_epoch" in wandb.config and self.epoch % wandb.config["save_every_nth_epoch"] == 0:
                 from src.training.persist import save_training_state
                 save_training_state(self, model, optimizer)
@@ -130,11 +135,13 @@ class Trainer:
 
                 tepoch.set_postfix(loss=loss.item())
 
-                if self.__inter_epoch_log() and wandb.config["dry_run"]:
+                if self.__inter_epoch_training_log(optimizer) and wandb.config["dry_run"]:
                     break
 
+                self.__inter_epoch_validation(model, optimizer)
 
-    def test(self, model: nn.Module, test_loader: DataLoader) -> None:
+
+    def test(self, model: nn.Module, test_loader: DataLoader, metrics: Union[dict, None] = None) -> float:
         """
         Tests a model
         :param model: model to test
@@ -142,42 +149,97 @@ class Trainer:
         :return: None
         """
 
+        if metrics is None:
+            metrics = {}
+
         model.eval()
         test_loss = 0
-        correct = 0
+
         with torch.no_grad():
             for data, target in test_loader:
                 data, target = data.to(self.device), target.to(self.device)
                 output = model(data)
-                test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
+                test_loss += self.loss_fn(output, target).item()
                 pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
-                correct += pred.eq(target.view_as(pred)).sum().item()
+                for name, metric in metrics:
+                    metric.compute(output, target.int())
 
         test_loss /= len(test_loader)
 
-        print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-                test_loss, correct, len(test_loader) * test_loader.batch_size,
-                100. * correct / len(test_loader) / test_loader.batch_size))
+        return test_loss
 
 
-    def __inter_epoch_log(self) -> bool:
-        if self.batch % wandb.config["log_interval_batches"] == 0:
-            self.__log()
+    def __inter_epoch_training_log(self, optimzer: Optimizer) -> bool:
+        if wandb.config["log_interval_batches"] is not None \
+                and self.batch % wandb.config["log_interval_batches"] == 0:
+            self.__training_log(optimzer)
             return True
         return False
 
 
-    def __epoch_end_log(self) -> bool:
-        if self.batch % wandb.config["log_interval_batches"] is None:
-            self.__log()
+    def __epoch_end_training_log(self, optimzer: Optimizer) -> bool:
+        if wandb.config["log_interval_batches"] is None:
+            self.__training_log(optimzer)
             return True
         return False
 
 
-    def __log(self) -> None:
+    def __training_log(self, optimizer: Optimizer) -> None:
+        batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch -1))
         print('\nTrain Epoch: {} [{}/{} ({:.0f}%)]\tAvg loss: {:.6f}\n'.format(
-                self.epoch, self.sample, len(self.train_dl),
-                100. * self.batch / len(self.train_dl), self.__logging_infos["running_loss"] / wandb.config["log_interval_batches"]))
+                self.epoch, batch_in_epoch, len(self.train_dl),
+                100. * batch_in_epoch / len(self.train_dl), self.__logging_infos["running_loss"] / wandb.config["log_interval_batches"]))
+
+        data = {"t_loss": self.__logging_infos["running_loss"], "lr": optimizer.param_groups[0]['lr']}
+
+        for name, metric in self.metrics.items():
+            data["name"] = metric.compute().item()
+            metric.reset()
+
+        self.__wandb_log(data)
+
         self.__logging_infos["running_loss"] = 0
+
+
+    def __wandb_log(self, data: dict):
+        data["epoch"] = self.epoch
+        data["batch"] = self.batch
+        data["sample"] = self.sample
+        wandb.log(data)
+
+
+    def __inter_epoch_validation(self, model: nn.Module, optimizer: Optimizer) -> bool:
+        if wandb.config["val_interval_batches"] is not None \
+                and self.batch % wandb.config["val_interval_batches"] == 0:
+            self.__validate(model, optimizer)
+            return True
+        return False
+
+
+    def __epoch_end_validation(self, model: nn.Module, optimizer: Optimizer) -> bool:
+        if wandb.config["val_interval_batches"] is None:
+            self.__validate(model, optimizer)
+            return True
+        return False
+
+
+    def __validate(self, model: nn.Module, optimizer: Optimizer) -> None:
+        loss = self.test(model, self.val_dl, self.__val_metrics)
+
+        batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch -1))
+        print('\nValidation Epoch: {} [{}/{} ({:.0f}%)]\tAvg loss: {:.6f}\n'.format(
+                self.epoch, batch_in_epoch, len(self.train_dl),
+                100. * batch_in_epoch / len(self.train_dl), loss))
+
+        data = {"v_loss": loss}
+        for name, metric in self.__val_metrics.items():
+            data["name"] = metric.compute().item()
+
+        self.__wandb_log(data)
+
+        if loss < self.best_validation_loss:
+            from src.training.persist import save_training_state
+            save_training_state(self, model, optimizer, "best.pth")
+
 
 
