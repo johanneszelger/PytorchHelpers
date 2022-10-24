@@ -10,6 +10,7 @@ from torch import optim
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
+from torchmetrics import Accuracy
 from torchvision import transforms, datasets
 
 from models.simple_net import SimpleNet
@@ -61,11 +62,37 @@ class Test(unittest.TestCase):
 
     def test_train_epoch(self):
         wandb.run.name = "test_train_epoch"
+        trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
+
+        self.model.eval()
+        assert not self.model.training
+
+        self.optimizer.step = MagicMock()
+        self.optimizer.zero_grad = MagicMock()
+        class Loss():
+            pass
+        loss = Loss()
+        trainer.loss_fn = MagicMock(return_value=loss)
+        loss.backward = MagicMock()
+
+        trainer.metrics["acc"] = Accuracy()
+        trainer.metrics["acc"].update = MagicMock()
+
+        trainer._Trainer__train_epoch(self.model, self.optimizer)
+
+        assert self.model.training
+        assert
+
+
     def test_train_logging(self):
+        wandb.run.name = "test_train_logging"
     def test_validation(self):
-    def test_cleanu(self):
+        wandb.run.name = "test_validation"
+    def test_cleanup(self):
+        wandb.run.name = "test_cleanup"
 
     def test_warm_start(self):
+        wandb.run.name = "test_warm_start"
 
 
 if __name__ == '__main__':
