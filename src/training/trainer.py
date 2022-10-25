@@ -1,4 +1,5 @@
 import copy
+import os
 from typing import Union
 
 import torch
@@ -61,6 +62,8 @@ class Trainer:
             wandb.config["print_logs"] = True
         if "dry_run" not in wandb.config:
             wandb.config["dry_run"] = False
+        if "cleanup_after_training" not in wandb.config:
+            wandb.config["cleanup_after_training"] = True
         if "save_every_nth_epoch" not in wandb.config and "cp_base_path" in wandb.config:
             wandb.config["save_every_nth_epoch"] = 1
 
@@ -118,6 +121,9 @@ class Trainer:
         # training is done, test the model
         # if self.test_dl:
         #     self.test(model, self.test_dl)
+
+        from src.training.persist import clean_checkpoints
+        clean_checkpoints()
 
 
     def __train_epoch(self, model: nn.Module, optimizer: Optimizer):

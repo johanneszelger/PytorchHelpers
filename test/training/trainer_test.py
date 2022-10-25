@@ -51,7 +51,7 @@ class Test(unittest.TestCase):
 
     def test_train(self):
         wandb.run.name = "test_train"
-        wandb.config.update({"val_interval_batches": 1})
+        wandb.config.update({"val_interval_batches": 1, "cleanup_after_training": False})
         trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
 
         trainer._Trainer__train_epoch = MagicMock(return_value=True)
@@ -66,6 +66,7 @@ class Test(unittest.TestCase):
 
         cp_dir = os.path.join("checkpoints", "test_train")
         files = os.listdir(cp_dir)
+        # every epoch, no validation cp because mocked
         assert len(files) == epochs, f"Expected {epochs} epoch checkpoints, got {len(files)}"
 
 
@@ -118,8 +119,8 @@ class Test(unittest.TestCase):
         assert self.optimizer.zero_grad.call_count == 1
 
 
-    def test_train_logging(self):
-        wandb.run.name = "test_train_logging"
+    def test_train_logging_interval(self):
+        wandb.run.name = "test_train_logging_interval"
         trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
 
         # 3 epochs with 2 batches each --> 2 logs
@@ -128,14 +129,24 @@ class Test(unittest.TestCase):
             trainer.train(self.model, self.optimizer, 3)
             assert log_fn.call_count == 2
 
+
+    def test_train_logging_end_of_epoch(self):
+        wandb.run.name = "test_train_logging_end_of_epoch"
+        trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
+
         # one log per epoch
         wandb.config.update({"log_interval_batches": None}, allow_val_change=True)
         with mock.patch.object(trainer, '_Trainer__training_log') as log_fn:
             trainer.train(self.model, self.optimizer, 3)
             assert log_fn.call_count == 3
 
+
+    def test_train_logging(self):
+        wandb.run.name = "test_train_logging"
+        trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
+
         # now test if real logging works
-        wandb.config.update({"val_interval_batches": 9999, "dry_run": True}, allow_val_change=True)
+        wandb.config.update({"val_interval_batches": 9999, "dry_run": True, "log_interval_batches": None}, allow_val_change=True)
         with mock.patch.object(wandb, 'log') as wandblog:
             trainer.metrics["acc"] = Accuracy()
             computed = Dummy()
@@ -155,8 +166,8 @@ class Test(unittest.TestCase):
                                  {'t_loss': 1.23, 'lr': 0.001, 'acc': 0.534, 'epoch': 1, 'batch': 2, 'sample': 1000})
 
 
-    def test_validation(self):
-        wandb.run.name = "test_validation"
+    def test_validation_interval(self):
+        wandb.run.name = "test_validation_interval"
         trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
 
         # 3 epochs with 2 batches each --> 2 vals
@@ -164,6 +175,12 @@ class Test(unittest.TestCase):
         with mock.patch.object(trainer, '_Trainer__validate') as val_fn:
             trainer.train(self.model, self.optimizer, 3)
             assert val_fn.call_count == 2
+        shutil.rmtree("checkpoints")
+
+
+    def test_validation_end_of_epoch(self):
+        wandb.run.name = "test_validation_end_of_epoch"
+        trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
 
         # one log per epoch
         wandb.config.update({"val_interval_batches": None}, allow_val_change=True)
@@ -171,8 +188,12 @@ class Test(unittest.TestCase):
             trainer.train(self.model, self.optimizer, 3)
             assert val_fn.call_count == 3
 
+
+    def test_validation_logging(self):
+        wandb.run.name = "test_validation_logging"
+        trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
         # now test if real logging works
-        wandb.config.update({"log_interval_batches": None, "dry_run": True}, allow_val_change=True)
+        wandb.config.update({"log_interval_batches": None, "dry_run": True, "val_interval_batches": None}, allow_val_change=True)
         with mock.patch.object(wandb, 'log') as wandblog:
             trainer.test = MagicMock(return_value=0.123)
             trainer._Trainer__val_metrics["acc"] = Accuracy()
@@ -196,6 +217,20 @@ class Test(unittest.TestCase):
 
     def test_cleanup(self):
         wandb.run.name = "test_cleanup"
+        wandb.config.update({"cleanup_after_training": True})
+        trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
+
+        epochs = 3
+        trainer.train(self.model, self.optimizer, epochs)
+        cp_dir = os.path.join("checkpoints", "test_cleanup")
+        # 3rd epoch and best val
+        files = os.listdir(cp_dir)
+        assert len(files) == 2, f"Expected {epochs} epoch checkpoints, got {len(files)}"
+        assert "best.pth" in files
+        assert "final.pth" in files
+
+
+
 
 
     def test_warm_start(self):

@@ -43,6 +43,9 @@ def save_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer
     :return: None
     """
     path = generate_run_path()
+    if path is None:
+        raise ValueError("configure cp_base_path to safe models")
+
     print(f'\nSaving checkpoint: {path}\n')
 
     if name is None:
@@ -58,9 +61,23 @@ def save_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer
                osp.join(path, name), pickle_module=dill)
 
 
+def clean_checkpoints():
+    cp_dir = generate_run_path()
+    if wandb.config["cleanup_after_training"] and cp_dir:
+        files = os.listdir(cp_dir)
+        last = max([int(f[6:f.index(".")]) for f in files if not f.startswith("best")])
+        for f in files:
+            if f == f'epoch_{last}.pth':
+                os.rename(osp.join(cp_dir, f'epoch_{last}.pth'), osp.join(cp_dir, 'final.pth'))
+            elif f == 'best.pth':
+                continue
+            else:
+                os.remove(osp.join(cp_dir, f))
+
+
 def generate_run_path():
     if not wandb.config["cp_base_path"]:
-        raise ValueError("configure cp_base_path to safe models")
+        return None
 
     path = osp.join(wandb.config["cp_base_path"], wandb.run.name)
 
