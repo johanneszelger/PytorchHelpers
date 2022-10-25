@@ -57,6 +57,8 @@ class Trainer:
             wandb.config["log_interval_batches"] = 100
         if "val_interval_batches" not in wandb.config:
             wandb.config["val_interval_batches"] = None
+        if "print_logs" not in wandb.config:
+            wandb.config["print_logs"] = True
         if "dry_run" not in wandb.config:
             wandb.config["dry_run"] = False
         if "save_every_nth_epoch" not in wandb.config and "cp_base_path" in wandb.config:
@@ -97,20 +99,25 @@ class Trainer:
 
         # train for x epochs
         for self.epoch in range(start_epoch, epochs + 1):
-            self.__train_epoch(model, optimizer)
+            result = self.__train_epoch(model, optimizer)
             if scheduler is not None:
                 scheduler.step()
 
-            self.__epoch_end_training_log(optimizer)
+            end_of_epoch_logged = self.__epoch_end_training_log(optimizer)
             self.__epoch_end_validation(model, optimizer)
 
             if "save_every_nth_epoch" in wandb.config and self.epoch % wandb.config["save_every_nth_epoch"] == 0:
                 from src.training.persist import save_training_state
                 save_training_state(self, model, optimizer)
 
+            if not result:
+                break
+            if end_of_epoch_logged and wandb.config["dry_run"]:
+                break
+
         # training is done, test the model
-        if self.test_dl:
-            self.test(model, self.test_dl)
+        # if self.test_dl:
+        #     self.test(model, self.test_dl)
 
 
     def __train_epoch(self, model: nn.Module, optimizer: Optimizer):
@@ -136,9 +143,11 @@ class Trainer:
                 tepoch.set_postfix(loss=loss.item())
 
                 if self.__inter_epoch_training_log(optimizer) and wandb.config["dry_run"]:
-                    break
+                    return False
 
                 self.__inter_epoch_validation(model, optimizer)
+
+        return True
 
 
     def test(self, model: nn.Module, test_loader: DataLoader, metrics: Union[dict, None] = None) -> float:
@@ -186,14 +195,18 @@ class Trainer:
 
     def __training_log(self, optimizer: Optimizer) -> None:
         batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch -1))
-        print('\nTrain Epoch: {} [{}/{} ({:.0f}%)]\tAvg loss: {:.6f}\n'.format(
-                self.epoch, batch_in_epoch, len(self.train_dl),
-                100. * batch_in_epoch / len(self.train_dl), self.__logging_infos["running_loss"] / wandb.config["log_interval_batches"]))
+        batches_since_last_log = wandb.config["log_interval_batches"] if wandb.config["log_interval_batches"] is not None \
+            else len(self.train_dl)
+        if wandb.config["print_logs"]:
+            print('\nTrain Epoch: {} [{}/{} ({:.0f}%)]\tAvg loss: {:.6f}\n'.format(
+                    self.epoch, batch_in_epoch, len(self.train_dl),
+                    100. * batch_in_epoch / len(self.train_dl),
+                    self.__logging_infos["running_loss"] / batches_since_last_log))
 
-        data = {"t_loss": self.__logging_infos["running_loss"], "lr": optimizer.param_groups[0]['lr']}
+        data = {"t_loss": self.__logging_infos["running_loss"] / batches_since_last_log, "lr": optimizer.param_groups[0]['lr']}
 
         for name, metric in self.metrics.items():
-            data["name"] = metric.compute().item()
+            data[name] = metric.compute().item()
             metric.reset()
 
         self.__wandb_log(data)
@@ -227,13 +240,14 @@ class Trainer:
         loss = self.test(model, self.val_dl, self.__val_metrics)
 
         batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch -1))
-        print('\nValidation Epoch: {} [{}/{} ({:.0f}%)]\tAvg loss: {:.6f}\n'.format(
-                self.epoch, batch_in_epoch, len(self.train_dl),
-                100. * batch_in_epoch / len(self.train_dl), loss))
+        if wandb.config["print_logs"]:
+            print('\nValidation Epoch: {} [{}/{} ({:.0f}%)]\tAvg loss: {:.6f}\n'.format(
+                    self.epoch, batch_in_epoch, len(self.train_dl),
+                    100. * batch_in_epoch / len(self.train_dl), loss))
 
         data = {"v_loss": loss}
         for name, metric in self.__val_metrics.items():
-            data["name"] = metric.compute().item()
+            data[name] = metric.compute().item()
 
         self.__wandb_log(data)
 
