@@ -1,1 +1,1 @@
-from vision_transforms_factory import TransformsFactory
+from .vision_transforms_factory import TransformsFactory
