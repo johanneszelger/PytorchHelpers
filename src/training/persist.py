@@ -1,15 +1,15 @@
 import os
+import os.path as osp
 
 import dill
 import torch
 import wandb
-import os.path as osp
-
 from torch import nn
 from torch.nn import Sequential
 from torch.optim import Optimizer
 
 from src.training.trainer import Trainer
+
 
 def generate_run_path():
     if not wandb.config["cp_base_path"]:

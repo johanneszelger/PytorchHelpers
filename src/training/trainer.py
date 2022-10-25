@@ -1,5 +1,4 @@
 import copy
-import os
 from typing import Union
 
 import torch
@@ -7,8 +6,8 @@ import torch.nn.functional as F
 import wandb
 from torch import nn
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
-from torch.optim.lr_scheduler import StepLR, _LRScheduler
 from tqdm import tqdm
 
 

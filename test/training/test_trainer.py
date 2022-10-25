@@ -1,18 +1,14 @@
 import os
 import shutil
 import unittest
-import time
 from unittest import mock
 from unittest.mock import MagicMock
 
 import torch
 import wandb
-from torch.optim import Adam
-from torch.utils.data import DataLoader
 from torchmetrics import Accuracy
-from torchvision import transforms, datasets
 
-from models.simple_net import SimpleNet
+from mnist_test import MnistTest
 from src.training.trainer import Trainer
 
 
@@ -20,34 +16,9 @@ class Dummy():
     pass
 
 
-class Test(unittest.TestCase):
+class Test(MnistTest):
     def __init__(self, methodName):
         super().__init__(methodName)
-        transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307,), (0.3081,))
-        ])
-        train_data = datasets.MNIST('../data', train=True, download=True,
-                                    transform=transform)
-        train_data.data = train_data.data[:1000]
-        test_data = datasets.MNIST('../data', train=False,
-                                   transform=transform)
-        test_data.data = test_data.data[:1000]
-
-        self.train_loader = DataLoader(train_data, batch_size=500)
-        self.test_loader = DataLoader(test_data, batch_size=500)
-        self.model = SimpleNet()
-        self.optimizer = Adam(self.model.parameters())
-
-    def setUp(self) -> None:
-        wandb.init(mode="disabled")
-        wandb.config.update({"cp_base_path": "checkpoints"})
-
-
-    def tearDown(self) -> None:
-        time.sleep(0.5)
-        shutil.rmtree(wandb.config["cp_base_path"], ignore_errors=True)
-
 
     def test_train(self):
         wandb.run.name = "test_train"
