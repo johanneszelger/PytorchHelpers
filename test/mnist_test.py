@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import transforms
 
-from src.models.simple_net import SimpleNet
+from src.pthelpers.models import SimpleNet
 
 
 class MnistTest(unittest.TestCase):

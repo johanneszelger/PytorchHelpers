@@ -1,7 +1,7 @@
 import unittest
 
-from src.models.simple_net import SimpleNet
-from src.training.trainer import Trainer
+from pthelpers.models.simple_net import SimpleNet
+from pthelpers.training.trainer import Trainer
 from test.models.model_test import ModelTest
 
 

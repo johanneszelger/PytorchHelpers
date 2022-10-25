@@ -2,7 +2,7 @@ import torch
 import wandb
 from torchvision.transforms import transforms
 
-class TransformerFactory:
+class TransformsFactory:
     def __init__(self):
         if "transformation" not in wandb.config:
             raise ValueError("To use the transform factory, make sure to define a transformation dict in wandb config and define all necessary params.")

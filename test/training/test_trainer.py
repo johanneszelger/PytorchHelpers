@@ -8,8 +8,8 @@ import torch
 import wandb
 from torchmetrics import Accuracy
 
-from mnist_test import MnistTest
-from src.training.trainer import Trainer
+from test.mnist_test import MnistTest
+from pthelpers.training import Trainer
 
 
 class Dummy():
