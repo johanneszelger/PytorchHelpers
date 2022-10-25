@@ -229,12 +229,33 @@ class Test(unittest.TestCase):
         assert "best.pth" in files
         assert "final.pth" in files
 
-
-
-
-
     def test_warm_start(self):
         wandb.run.name = "test_warm_start"
+        cp_dir = os.path.join("checkpoints", "test_warm_start")
+        wandb.config.update({"cleanup_after_training": False, "val_interval_batches": 999})
+        trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
+
+        epochs = 1
+        trainer._Trainer__train_epoch = MagicMock()
+        trainer.train(self.model, self.optimizer, epochs)
+
+        # one epoch
+        files = os.listdir(cp_dir)
+        assert trainer._Trainer__train_epoch.call_count == epochs
+        assert len(files) == 1, f"Expected {epochs} epoch checkpoints, got {len(files)}"
+
+        # add one epoch
+        epochs = 2
+        trainer.train(self.model, self.optimizer, epochs)
+        assert trainer._Trainer__train_epoch.call_count == epochs
+        files = os.listdir(cp_dir)
+        assert len(files) == 2, f"Expected {epochs} epoch checkpoints, got {len(files)}"
+
+        # add nothing
+        trainer.train(self.model, self.optimizer, epochs)
+        assert trainer._Trainer__train_epoch.call_count == epochs
+        files = os.listdir(cp_dir)
+        assert len(files) == 2, f"Expected {epochs} epoch checkpoints, got {len(files)}"
 
 
     def __prepare_trainer_for_direct_train(self, trainer: Trainer):

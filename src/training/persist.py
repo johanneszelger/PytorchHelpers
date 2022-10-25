@@ -11,8 +11,17 @@ from torch.optim import Optimizer
 
 from src.training.trainer import Trainer
 
+def generate_run_path():
+    if not wandb.config["cp_base_path"]:
+        return None
 
-def load_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer) -> None:
+    path = osp.join(wandb.config["cp_base_path"], wandb.run.name)
+
+    os.makedirs(path, exist_ok=True)
+
+    return path
+
+def load_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer, name: str) -> None:
     """
     loads a training state from a file
     :param trainer: Trainer to load
@@ -20,7 +29,7 @@ def load_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer
     :param optimizer: optimizer params to load
     :return: None
     """
-    checkpoint = torch.load(generate_run_path())
+    checkpoint = torch.load(osp.join(generate_run_path(), name))
     trainer.epoch = checkpoint['epoch']
     trainer.batch = checkpoint['batch']
     trainer.sample = checkpoint['sample']
@@ -75,12 +84,13 @@ def clean_checkpoints():
                 os.remove(osp.join(cp_dir, f))
 
 
-def generate_run_path():
-    if not wandb.config["cp_base_path"]:
-        return None
+def load_latest(trainer: Trainer, model: nn.Module, optimizer: Optimizer) -> int:
+    cp_dir = generate_run_path()
+    if wandb.config["warm_start"] and cp_dir:
+        files = os.listdir(cp_dir)
+        epochs = [int(f[6:f.index(".")]) for f in files if not f.startswith("best")]
+        if len(epochs) > 0:
+            load_training_state(trainer, model, optimizer, f"epoch_{max(epochs)}.pth")
+            return max(epochs) + 1
 
-    path = osp.join(wandb.config["cp_base_path"], wandb.run.name)
-
-    os.makedirs(path, exist_ok=True)
-
-    return path
+    return 1

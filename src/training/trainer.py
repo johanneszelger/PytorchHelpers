@@ -62,6 +62,8 @@ class Trainer:
             wandb.config["print_logs"] = True
         if "dry_run" not in wandb.config:
             wandb.config["dry_run"] = False
+        if "warm_start" not in wandb.config:
+            wandb.config["warm_start"] = True
         if "cleanup_after_training" not in wandb.config:
             wandb.config["cleanup_after_training"] = True
         if "save_every_nth_epoch" not in wandb.config and "cp_base_path" in wandb.config:
@@ -96,7 +98,8 @@ class Trainer:
         # prepare training
         self.__reset()
         self.__to(self.device, model)
-        start_epoch = 1
+        from src.training.persist import load_latest
+        start_epoch = load_latest(self, model, optimizer)
         self.__logging_infos["end_epoch"] = epochs
         self.__logging_infos["running_loss"] = 0
 
