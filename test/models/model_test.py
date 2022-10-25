@@ -2,8 +2,7 @@ import os
 
 import wandb
 
-from mnist_test import MnistTest
-
+from test.mnist_test import MnistTest
 
 class ModelTest(MnistTest):
     def setUp(self) -> None:

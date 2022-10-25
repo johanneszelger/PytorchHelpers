@@ -9,7 +9,7 @@ import wandb
 from torchmetrics import Accuracy
 
 from test.mnist_test import MnistTest
-from pthelpers.training import Trainer
+from src.pthelpers.training import Trainer
 
 
 class Dummy():
