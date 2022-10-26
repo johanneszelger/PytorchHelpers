@@ -47,7 +47,7 @@ class ModelBuilder():
 
         :return: pytorch model
         '''
-        model_name = wandb.config["model"]["model_name"]
+        model_name = wandb.config["model"]["name"]
         if model_name == 'DenseNet': return self.build_densenet()
         if model_name == 'DenseNet121': return self.build_densenet121()
         if model_name == 'EfficientNetB0': return self.build_efficientnetB0()
