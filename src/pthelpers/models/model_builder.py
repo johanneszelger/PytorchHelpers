@@ -7,7 +7,7 @@ from torchvision.models import DenseNet, densenet121, DenseNet121_Weights, effic
 
 class ModelBuilder():
     def __init__(self):
-        if "model" not in wandb.config or "model_name" not in wandb.config["model"]:
+        if "model" not in wandb.config or "name" not in wandb.config["model"]:
             raise ValueError("To use the model builder, make sure to define a model dict in wandb config and define all necessary params "
                              "there, in particular model_name")
 
