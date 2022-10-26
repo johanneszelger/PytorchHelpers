@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 import torch
 import wandb
 from torchmetrics import Accuracy
+from torchmetrics.classification import MulticlassAccuracy
 
 from test.mnist_test import MnistTest
 from src.pthelpers.training import Trainer
@@ -56,7 +57,7 @@ class Test(MnistTest):
         loss.backward = MagicMock()
         loss.item = MagicMock(return_value=1.23)
 
-        trainer.metrics["acc"] = Accuracy()
+        trainer.metrics["acc"] = MulticlassAccuracy(10)
         trainer.metrics["acc"].update = MagicMock()
 
         trainer._Trainer__inter_epoch_training_log = MagicMock(return_value=True)
@@ -119,7 +120,7 @@ class Test(MnistTest):
         # now test if real logging works
         wandb.config.update({"val_interval_batches": 9999, "dry_run": True, "log_interval_batches": None}, allow_val_change=True)
         with mock.patch.object(wandb, 'log') as wandblog:
-            trainer.metrics["acc"] = Accuracy()
+            trainer.metrics["acc"] = MulticlassAccuracy(10)
             computed = Dummy()
             trainer.metrics["acc"].compute = MagicMock(return_value=computed)
             computed.item = MagicMock(return_value=0.534)
@@ -167,7 +168,7 @@ class Test(MnistTest):
         wandb.config.update({"log_interval_batches": None, "dry_run": True, "val_interval_batches": None}, allow_val_change=True)
         with mock.patch.object(wandb, 'log') as wandblog:
             trainer.test = MagicMock(return_value=0.123)
-            trainer._Trainer__val_metrics["acc"] = Accuracy()
+            trainer._Trainer__val_metrics["acc"] = MulticlassAccuracy(10)
             computed = Dummy()
             trainer._Trainer__val_metrics["acc"].compute = MagicMock(return_value=computed)
             computed.item = MagicMock(return_value=0.534)
