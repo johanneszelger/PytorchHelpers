@@ -2,8 +2,8 @@ import unittest
 
 import wandb
 
-from pthelpers.models import ModelBuilder
-from pthelpers.training import Trainer
+from src.pthelpers.models import ModelBuilder
+from src.pthelpers.training import Trainer
 from test.models.model_test import ModelTest
 
 
