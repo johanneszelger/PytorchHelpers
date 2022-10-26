@@ -86,7 +86,7 @@ def clean_checkpoints():
 
 def load_latest(trainer: Trainer, model: nn.Module, optimizer: Optimizer) -> int:
     cp_dir = generate_run_path()
-    if wandb.config["warm_start"] and cp_dir:
+    if wandb.config["training"]["warm_start"] and cp_dir:
         files = os.listdir(cp_dir)
         epochs = [int(f[6:f.index(".")]) for f in files if not f.startswith("best")]
         if len(epochs) > 0:
