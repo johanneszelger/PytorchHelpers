@@ -37,4 +37,4 @@ class PredictionCount(Metric):
 if __name__ == '__main__':
     from torchmetrics.utilities import check_forward_full_state_property
 
-    check_forward_full_state_property(LabelCount, {"label_value": 0}, {"preds": [], "target": torch.tensor([0, 0, 1, 1, 0])})
+    check_forward_full_state_property(PredictionCount, {"label_value": 0}, {"preds": [], "target": torch.tensor([0, 0, 1, 1, 0])})
