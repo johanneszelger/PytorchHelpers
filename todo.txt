@@ -1,3 +1,7 @@
-tests
-add loading at start
-add cleanup
+fix configs
+fix comparison
+
+add custom metrics
+add comparison
+add summary for run
+

@@ -1,4 +1,5 @@
 import copy
+import logging
 from typing import Union
 
 import torch
@@ -9,6 +10,8 @@ from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+from pthelpers.utils.reproducibility import seed_set
 
 
 def should_use_cuda(no_cuda):
@@ -94,6 +97,9 @@ class Trainer:
         :param scheduler: scheduler to use
         :return: None
         """
+        if seed_set is None:
+            logging.getLogger().warning("No seed set, results might not be reproducible!")
+
         # prepare training
         self.__reset()
         self.__to(self.device, model)
