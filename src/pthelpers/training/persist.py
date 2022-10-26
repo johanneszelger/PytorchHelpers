@@ -8,7 +8,7 @@ from torch import nn
 from torch.nn import Sequential
 from torch.optim import Optimizer
 
-from src.pthelpers.training.trainer import Trainer
+from pthelpers.training.trainer import Trainer
 
 
 def generate_run_path():

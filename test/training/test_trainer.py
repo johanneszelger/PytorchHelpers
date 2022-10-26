@@ -10,7 +10,7 @@ from torchmetrics import Accuracy
 from torchmetrics.classification import MulticlassAccuracy
 
 from test.mnist_test import MnistTest
-from src.pthelpers.training import Trainer
+from pthelpers.training import Trainer
 
 
 class Dummy():

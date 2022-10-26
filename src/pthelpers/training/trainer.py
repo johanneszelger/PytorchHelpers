@@ -268,7 +268,7 @@ class Trainer:
         self.__wandb_log(data)
 
         if loss < self.best_validation_loss:
-            from src.pthelpers.training.persist import save_training_state
+            from pthelpers.training.persist import save_training_state
             save_training_state(self, model, optimizer, "best.pth")
 
 
