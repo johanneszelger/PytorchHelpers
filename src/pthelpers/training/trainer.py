@@ -11,7 +11,10 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.pthelpers.utils.reproducibility import seed_set
+try:
+    from pthelpers.utils.reproducibility import seed_set
+except:
+    from src.pthelpers.utils.reproducibility import seed_set
 
 
 def should_use_cuda(no_cuda):
