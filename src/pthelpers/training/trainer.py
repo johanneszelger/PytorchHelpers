@@ -11,7 +11,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from pthelpers.utils.reproducibility import seed_set
+from pthelpers.utils.reproducibility import get_seed
 
 
 def should_use_cuda(no_cuda):
@@ -99,7 +99,7 @@ class Trainer:
         :param scheduler: scheduler to use
         :return: None
         """
-        if seed_set is None:
+        if get_seed() is None:
             logging.getLogger().warning("No seed set, results might not be reproducible!")
 
         # prepare training

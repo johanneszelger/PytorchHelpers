@@ -5,7 +5,11 @@ import numpy
 import numpy as np
 import torch
 
-seed_set = None
+__seed_set = None
+
+def get_seed():
+    return __seed_set
+
 def set_seed(seed: int, deterministic:bool = False):
     '''
     Sets all seeds to make experiments reproducible
@@ -23,8 +27,8 @@ def set_seed(seed: int, deterministic:bool = False):
     torch.cuda.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
-    global seed_set
-    seed_set = seed
+    global __seed_set
+    __seed_set = seed
 
 
     def seed_worker(worker_id):
