@@ -97,7 +97,7 @@ class Trainer:
         # prepare training
         self.__reset()
         self.__to(self.device, model)
-        from pthelpers.training.persist import load_latest
+        from src.pthelpers.training.persist import load_latest
         start_epoch = load_latest(self, model, optimizer)
         self.__logging_infos["end_epoch"] = epochs
         self.__logging_infos["running_loss"] = 0
@@ -112,7 +112,7 @@ class Trainer:
             self.__epoch_end_validation(model, optimizer)
 
             if "save_every_nth_epoch" in wandb.config and self.epoch % wandb.config["save_every_nth_epoch"] == 0:
-                from pthelpers.training.persist import save_training_state
+                from src.pthelpers.training.persist import save_training_state
                 save_training_state(self, model, optimizer)
 
             if not result:
@@ -124,7 +124,7 @@ class Trainer:
         # if self.test_dl:
         #     self.test(model, self.test_dl)
 
-        from pthelpers.training.persist import clean_checkpoints
+        from src.pthelpers.training.persist import clean_checkpoints
         clean_checkpoints()
 
 
@@ -260,7 +260,7 @@ class Trainer:
         self.__wandb_log(data)
 
         if loss < self.best_validation_loss:
-            from pthelpers.training.persist import save_training_state
+            from src.pthelpers.training.persist import save_training_state
             save_training_state(self, model, optimizer, "best.pth")
 
 
