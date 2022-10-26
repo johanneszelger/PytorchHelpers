@@ -2,8 +2,7 @@ import unittest
 
 import torch
 
-from pthelpers.metrics.prediction_count import PredictionCount
-from src.pthelpers.metrics.label_count import LabelCount
+from src.pthelpers.metrics.prediction_count import PredictionCount
 
 
 class LabelCountMetric(unittest.TestCase):
