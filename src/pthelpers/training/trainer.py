@@ -55,21 +55,23 @@ class Trainer:
         self.__logging_infos = {}
         self.device = should_use_cuda(no_cuda)
         self.best_validation_loss = float("inf")
-
-        if "log_interval_batches" not in wandb.config:
-            wandb.config["log_interval_batches"] = 100
-        if "val_interval_batches" not in wandb.config:
-            wandb.config["val_interval_batches"] = None
-        if "print_logs" not in wandb.config:
-            wandb.config["print_logs"] = True
-        if "dry_run" not in wandb.config:
-            wandb.config["dry_run"] = False
-        if "warm_start" not in wandb.config:
-            wandb.config["warm_start"] = True
-        if "cleanup_after_training" not in wandb.config:
-            wandb.config["cleanup_after_training"] = True
-        if "save_every_nth_epoch" not in wandb.config and "cp_base_path" in wandb.config:
-            wandb.config["save_every_nth_epoch"] = 1
+        
+        self.config = self.config["training"]
+        
+        if "log_interval_batches" not in self.config:
+            self.config["log_interval_batches"] = 100
+        if "val_interval_batches" not in self.config:
+            self.config["val_interval_batches"] = None
+        if "print_logs" not in self.config:
+            self.config["print_logs"] = True
+        if "dry_run" not in self.config:
+            self.config["dry_run"] = False
+        if "warm_start" not in self.config:
+            self.config["warm_start"] = True
+        if "cleanup_after_training" not in self.config:
+            self.config["cleanup_after_training"] = True
+        if "save_every_nth_epoch" not in self.config and "cp_base_path" in self.config:
+            self.config["save_every_nth_epoch"] = 1
 
 
     def __reset(self):
@@ -117,13 +119,13 @@ class Trainer:
             end_of_epoch_logged = self.__epoch_end_training_log(optimizer)
             self.__epoch_end_validation(model, optimizer)
 
-            if "save_every_nth_epoch" in wandb.config and self.epoch % wandb.config["save_every_nth_epoch"] == 0:
+            if "save_every_nth_epoch" in self.config and self.epoch % self.config["save_every_nth_epoch"] == 0:
                 from src.pthelpers.training.persist import save_training_state
                 save_training_state(self, model, optimizer)
 
             if not result:
                 break
-            if end_of_epoch_logged and wandb.config["dry_run"]:
+            if end_of_epoch_logged and self.config["dry_run"]:
                 break
 
         # training is done, test the model
@@ -156,7 +158,7 @@ class Trainer:
 
                 tepoch.set_postfix(loss=loss.item())
 
-                if self.__inter_epoch_training_log(optimizer) and wandb.config["dry_run"]:
+                if self.__inter_epoch_training_log(optimizer) and self.config["dry_run"]:
                     return False
 
                 self.__inter_epoch_validation(model, optimizer)
@@ -193,15 +195,15 @@ class Trainer:
 
 
     def __inter_epoch_training_log(self, optimzer: Optimizer) -> bool:
-        if wandb.config["log_interval_batches"] is not None \
-                and self.batch % wandb.config["log_interval_batches"] == 0:
+        if self.config["log_interval_batches"] is not None \
+                and self.batch % self.config["log_interval_batches"] == 0:
             self.__training_log(optimzer)
             return True
         return False
 
 
     def __epoch_end_training_log(self, optimzer: Optimizer) -> bool:
-        if wandb.config["log_interval_batches"] is None:
+        if self.config["log_interval_batches"] is None:
             self.__training_log(optimzer)
             return True
         return False
@@ -209,9 +211,9 @@ class Trainer:
 
     def __training_log(self, optimizer: Optimizer) -> None:
         batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch -1))
-        batches_since_last_log = wandb.config["log_interval_batches"] if wandb.config["log_interval_batches"] is not None \
+        batches_since_last_log = self.config["log_interval_batches"] if self.config["log_interval_batches"] is not None \
             else len(self.train_dl)
-        if wandb.config["print_logs"]:
+        if self.config["print_logs"]:
             print('\nTrain Epoch: {} [{}/{} ({:.0f}%)]\tAvg loss: {:.6f}\n'.format(
                     self.epoch, batch_in_epoch, len(self.train_dl),
                     100. * batch_in_epoch / len(self.train_dl),
@@ -236,15 +238,15 @@ class Trainer:
 
 
     def __inter_epoch_validation(self, model: nn.Module, optimizer: Optimizer) -> bool:
-        if wandb.config["val_interval_batches"] is not None \
-                and self.batch % wandb.config["val_interval_batches"] == 0:
+        if self.config["val_interval_batches"] is not None \
+                and self.batch % self.config["val_interval_batches"] == 0:
             self.__validate(model, optimizer)
             return True
         return False
 
 
     def __epoch_end_validation(self, model: nn.Module, optimizer: Optimizer) -> bool:
-        if wandb.config["val_interval_batches"] is None:
+        if self.config["val_interval_batches"] is None:
             self.__validate(model, optimizer)
             return True
         return False
@@ -254,7 +256,7 @@ class Trainer:
         loss = self.test(model, self.val_dl, self.__val_metrics)
 
         batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch -1))
-        if wandb.config["print_logs"]:
+        if self.config["print_logs"]:
             print('\nValidation Epoch: {} [{}/{} ({:.0f}%)]\tAvg loss: {:.6f}\n'.format(
                     self.epoch, batch_in_epoch, len(self.train_dl),
                     100. * batch_in_epoch / len(self.train_dl), loss))
