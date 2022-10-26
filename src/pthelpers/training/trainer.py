@@ -11,10 +11,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-try:
-    from pthelpers.utils.reproducibility import seed_set
-except:
-    from src.pthelpers.utils.reproducibility import seed_set
+from pthelpers.utils.reproducibility import seed_set
 
 
 def should_use_cuda(no_cuda):
@@ -108,7 +105,7 @@ class Trainer:
         # prepare training
         self.__reset()
         self.__to(self.device, model)
-        from src.pthelpers.training.persist import load_latest
+        from pthelpers.training.persist import load_latest
         start_epoch = load_latest(self, model, optimizer)
         self.__logging_infos["end_epoch"] = epochs
         self.__logging_infos["running_loss"] = 0
@@ -123,7 +120,7 @@ class Trainer:
             self.__epoch_end_validation(model, optimizer)
 
             if "save_every_nth_epoch" in self.config and self.epoch % self.config["save_every_nth_epoch"] == 0:
-                from src.pthelpers.training.persist import save_training_state
+                from pthelpers.training.persist import save_training_state
                 save_training_state(self, model, optimizer)
 
             if not result:
@@ -135,7 +132,7 @@ class Trainer:
         # if self.test_dl:
         #     self.test(model, self.test_dl)
 
-        from src.pthelpers.training.persist import clean_checkpoints
+        from pthelpers.training.persist import clean_checkpoints
         clean_checkpoints()
 
 
