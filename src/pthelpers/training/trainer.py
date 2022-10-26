@@ -59,7 +59,7 @@ class Trainer:
         self.device = should_use_cuda(no_cuda)
         self.best_validation_loss = float("inf")
         
-        self.config = self.config["training"]
+        self.config = wandb.config["training"]
         
         if "log_interval_batches" not in self.config:
             self.config["log_interval_batches"] = 100
