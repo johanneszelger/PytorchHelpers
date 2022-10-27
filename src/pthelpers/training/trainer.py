@@ -187,7 +187,11 @@ class Trainer:
         test_loss = 0
 
         with torch.no_grad():
-            for data, target in test_loader:
+            for samples in test_loader:
+                data = samples[0]
+                target = samples[1]
+                paths = (samples + [None])[2]
+
                 data, target = data.to(self.device), target.to(self.device)
                 output = model(data)
                 test_loss += self.loss_fn(output, target).item()
