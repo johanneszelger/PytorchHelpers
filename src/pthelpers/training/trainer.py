@@ -143,8 +143,8 @@ class Trainer:
             tepoch.set_description(f"Epoch {self.epoch}/{self.__logging_infos['end_epoch']}")
             for batch_idx, samples in enumerate(tepoch, 0):
                 data = samples[0]
-                data = samples[1]
-                paths = (list(a) + [None])[2]
+                target = samples[1]
+                paths = (samples + [None])[2]
 
                 self.batch += 1
                 self.sample += len(data)
