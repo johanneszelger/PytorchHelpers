@@ -196,7 +196,7 @@ class Trainer:
                 output = model(data)
                 test_loss += self.loss_fn(output, target).item()
                 pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
-                for name, metric in metrics:
+                for name, metric in metrics.items():
                     metric.compute(output, target.int())
 
         test_loss /= len(test_loader)
