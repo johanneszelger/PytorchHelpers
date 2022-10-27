@@ -273,7 +273,7 @@ class Trainer:
 
         data = {"v_loss": loss}
         for name, metric in self.__val_metrics.items():
-            data[name] = metric.compute().item()
+            data["v_" + name] = metric.compute().item()
 
         self.__wandb_log(data)
 
