@@ -53,7 +53,7 @@ def save_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer
     """
     path = generate_run_path()
     if path is None:
-        raise ValueError("configure cp_base_path to safe models")
+        return
 
     print(f'\nSaving checkpoint: {path}\n')
 
