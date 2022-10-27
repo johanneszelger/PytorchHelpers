@@ -1,7 +1,4 @@
-fix configs
-fix comparison
+add plotting images with augmentation at beginning
 
-add custom metrics
-add comparison
 add summary for run
 

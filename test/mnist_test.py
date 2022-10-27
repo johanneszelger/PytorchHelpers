@@ -46,10 +46,10 @@ class MnistTest(unittest.TestCase):
 
     def setUp(self) -> None:
         wandb.init(mode="disabled")
-        wandb.config.update({"cp_base_path": "checkpoints"})
+        wandb.config.update({"training": {"cp_base_path": "checkpoints"}})
         torch.manual_seed(42)
 
 
     def tearDown(self) -> None:
         time.sleep(0.5)
-        shutil.rmtree(wandb.config["cp_base_path"], ignore_errors=True)
+        shutil.rmtree(wandb.config["training"]["cp_base_path"], ignore_errors=True)
