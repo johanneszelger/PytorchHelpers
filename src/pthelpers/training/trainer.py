@@ -183,6 +183,9 @@ class Trainer:
         if metrics is None:
             metrics = {}
 
+        for name, metric in metrics.items():
+            metric.reset()
+
         model.eval()
         test_loss = 0
 
@@ -195,7 +198,7 @@ class Trainer:
                 data, target = data.to(self.device), target.to(self.device)
                 output = model(data)
                 test_loss += self.loss_fn(output, target).item()
-                pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
+
                 for name, metric in metrics.items():
                     metric.update(output, target.int())
 
