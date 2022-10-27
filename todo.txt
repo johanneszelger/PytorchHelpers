@@ -2,3 +2,4 @@ add plotting images with augmentation at beginning
 
 add summary for run
 
+unfreeze

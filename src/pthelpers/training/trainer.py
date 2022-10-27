@@ -237,7 +237,7 @@ class Trainer:
 
 
     def __wandb_log(self, data: dict):
-        data["epoch"] = self.epoch
+        data["epoch"] = self.batch / len(self.train_dl)
         data["batch"] = self.batch
         data["sample"] = self.sample
         wandb.log(data)
