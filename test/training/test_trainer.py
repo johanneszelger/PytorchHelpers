@@ -23,7 +23,7 @@ class Test(MnistTest):
 
     def test_train(self):
         wandb.run.name = "test_train"
-        wandb.config.update({"training": {"val_interval_batches": 1, "cleanup_after_training": False}})
+        wandb.config["training"].update({"val_interval_batches": 1, "cleanup_after_training": False})
         trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
 
         trainer._Trainer__train_epoch = MagicMock(return_value=True)
@@ -79,7 +79,7 @@ class Test(MnistTest):
 
     def test_dry_run(self):
         wandb.run.name = "test_dry_run"
-        wandb.config.update({"training": {"dry_run": True}})
+        wandb.config["training"].update({"dry_run": True})
         trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
 
         self.optimizer.zero_grad = MagicMock()
@@ -96,7 +96,7 @@ class Test(MnistTest):
         trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
 
         # 3 epochs with 2 batches each --> 2 logs
-        wandb.config.update({"training": {"log_interval_batches": 3}}, allow_val_change=True)
+        wandb.config["training"].update({"log_interval_batches": 3})
         with mock.patch.object(trainer, '_Trainer__training_log') as log_fn:
             trainer.train(self.model, self.optimizer, 3)
             assert log_fn.call_count == 2
@@ -107,7 +107,7 @@ class Test(MnistTest):
         trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
 
         # one log per epoch
-        wandb.config.update({"training": {"log_interval_batches": None}}, allow_val_change=True)
+        wandb.config["training"].update({"log_interval_batches": None})
         with mock.patch.object(trainer, '_Trainer__training_log') as log_fn:
             trainer.train(self.model, self.optimizer, 3)
             assert log_fn.call_count == 3
@@ -118,7 +118,7 @@ class Test(MnistTest):
         trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
 
         # now test if real logging works
-        wandb.config.update({"training": {"val_interval_batches": 9999, "dry_run": True, "log_interval_batches": None}}, allow_val_change=True)
+        wandb.config["training"].update({"val_interval_batches": 9999, "dry_run": True, "log_interval_batches": None})
         with mock.patch.object(wandb, 'log') as wandblog:
             trainer.metrics["acc"] = MulticlassAccuracy(10)
             computed = Dummy()
@@ -143,7 +143,7 @@ class Test(MnistTest):
         trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
 
         # 3 epochs with 2 batches each --> 2 vals
-        wandb.config.update({"training": {"val_interval_batches": 3}}, allow_val_change=True)
+        wandb.config["training"].update({"val_interval_batches": 3})
         with mock.patch.object(trainer, '_Trainer__validate') as val_fn:
             trainer.train(self.model, self.optimizer, 3)
             assert val_fn.call_count == 2
@@ -155,7 +155,7 @@ class Test(MnistTest):
         trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
 
         # one log per epoch
-        wandb.config.update({"training": {"val_interval_batches": None}}, allow_val_change=True)
+        wandb.config["training"].update({"val_interval_batches": None})
         with mock.patch.object(trainer, '_Trainer__validate') as val_fn:
             trainer.train(self.model, self.optimizer, 3)
             assert val_fn.call_count == 3
@@ -165,7 +165,7 @@ class Test(MnistTest):
         wandb.run.name = "test_validation_logging"
         trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
         # now test if real logging works
-        wandb.config.update({"training": {"log_interval_batches": None, "dry_run": True, "val_interval_batches": None}}, allow_val_change=True)
+        wandb.config["training"].update({"log_interval_batches": None, "dry_run": True, "val_interval_batches": None})
         with mock.patch.object(wandb, 'log') as wandblog:
             trainer.test = MagicMock(return_value=0.123)
             trainer._Trainer__val_metrics["acc"] = MulticlassAccuracy(10)
@@ -189,7 +189,7 @@ class Test(MnistTest):
 
     def test_cleanup(self):
         wandb.run.name = "test_cleanup"
-        wandb.config.update({"training": {"cleanup_after_training": True}})
+        wandb.config["training"].update({"cleanup_after_training": True})
         trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
 
         epochs = 3
@@ -204,7 +204,7 @@ class Test(MnistTest):
     def test_warm_start(self):
         wandb.run.name = "test_warm_start"
         cp_dir = os.path.join("checkpoints", "test_warm_start")
-        wandb.config.update({"training": {"cleanup_after_training": False, "val_interval_batches": 999}})
+        wandb.config["training"].update({"cleanup_after_training": False, "val_interval_batches": 999})
         trainer = Trainer(self.train_loader, self.test_loader, self.test_loader)
 
         epochs = 1

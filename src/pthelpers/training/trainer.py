@@ -70,6 +70,8 @@ class Trainer:
             self.config["warm_start"] = True
         if "cleanup_after_training" not in self.config:
             self.config["cleanup_after_training"] = True
+        if "cp_base_path" not in self.config:
+            self.config["cp_base_path"] = None
         if "save_every_nth_epoch" not in self.config and "cp_base_path" in self.config:
             self.config["save_every_nth_epoch"] = 1
 
