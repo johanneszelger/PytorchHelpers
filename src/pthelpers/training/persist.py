@@ -12,10 +12,10 @@ from pthelpers.training.trainer import Trainer
 
 
 def generate_run_path():
-    if not wandb.config["cp_base_path"]:
+    if not wandb.config["training"]["cp_base_path"]:
         return None
 
-    path = osp.join(wandb.config["cp_base_path"], wandb.run.name)
+    path = osp.join(wandb.config["training"]["cp_base_path"], wandb.run.name)
 
     os.makedirs(path, exist_ok=True)
 
@@ -72,7 +72,7 @@ def save_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer
 
 def clean_checkpoints():
     cp_dir = generate_run_path()
-    if wandb.config["cleanup_after_training"] and cp_dir:
+    if wandb.config["training"]["cleanup_after_training"] and cp_dir:
         files = os.listdir(cp_dir)
         last = max([int(f[6:f.index(".")]) for f in files if not f.startswith("best")])
         for f in files:
