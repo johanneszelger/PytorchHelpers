@@ -55,9 +55,9 @@ class Trainer:
         self.__logging_infos = {}
         self.device = should_use_cuda(no_cuda)
         self.best_validation_loss = float("inf")
-        
+
         self.config = wandb.config["training"]
-        
+
         if "log_interval_batches" not in self.config:
             self.config["log_interval_batches"] = 100
         if "val_interval_batches" not in self.config:
@@ -141,7 +141,11 @@ class Trainer:
 
         with tqdm(self.train_dl, unit="batch") as tepoch:
             tepoch.set_description(f"Epoch {self.epoch}/{self.__logging_infos['end_epoch']}")
-            for batch_idx, (data, target) in enumerate(tepoch, 0):
+            for batch_idx, samples in enumerate(tepoch, 0):
+                data = samples[0]
+                data = samples[1]
+                paths = (list(a) + [None])[2]
+
                 self.batch += 1
                 self.sample += len(data)
 
@@ -210,7 +214,7 @@ class Trainer:
 
 
     def __training_log(self, optimizer: Optimizer) -> None:
-        batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch -1))
+        batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch - 1))
         batches_since_last_log = self.config["log_interval_batches"] if self.config["log_interval_batches"] is not None \
             else len(self.train_dl)
         if self.config["print_logs"]:
@@ -255,7 +259,7 @@ class Trainer:
     def __validate(self, model: nn.Module, optimizer: Optimizer) -> None:
         loss = self.test(model, self.val_dl, self.__val_metrics)
 
-        batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch -1))
+        batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch - 1))
         if self.config["print_logs"]:
             print('\nValidation Epoch: {} [{}/{} ({:.0f}%)]\tAvg loss: {:.6f}\n'.format(
                     self.epoch, batch_in_epoch, len(self.train_dl),
