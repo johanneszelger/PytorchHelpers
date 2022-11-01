@@ -11,7 +11,7 @@ class TestSimpleNet(ModelTest):
 
     def test_simplenet_training(self):
         self.model = SimpleNet()
-        Trainer(self.train_loader, self.test_loader).train(self.model, self.optimizer, 5, self.scheduler)
+        Trainer(self.train_loader, self.test_loader, 10).train(self.model, self.optimizer, 5, self.scheduler)
         self._assert_cp_count()
 
 if __name__ == '__main__':

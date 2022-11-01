@@ -36,7 +36,7 @@ class TestModelBuilder(ModelTest):
         self.model = ModelBuilder().build_model()
         assert model_params["name"] == self.model[0].__class__.__name__, \
             f"Expected model name {model_params['name']}, got {self.model[0].__class__.__name__}"
-        Trainer(self.train_loader, self.test_loader).train(self.model, self.optimizer, 5, self.scheduler)
+        Trainer(self.train_loader, self.test_loader, 10).train(self.model, self.optimizer, 5, self.scheduler)
 
 
     def test_densenet121_training(self):
@@ -46,7 +46,7 @@ class TestModelBuilder(ModelTest):
         self.model = ModelBuilder().build_model()
         assert model_params["name"].startswith(self.model[0].__class__.__name__), \
             f"Expected model name {model_params['name']}, got {self.model[0].__class__.__name__}"
-        Trainer(self.train_loader, self.test_loader).train(self.model, self.optimizer, 5, self.scheduler)
+        Trainer(self.train_loader, self.test_loader, 10).train(self.model, self.optimizer, 5, self.scheduler)
 
 
     def test_efficientnetB0_training(self):
@@ -55,7 +55,7 @@ class TestModelBuilder(ModelTest):
         self.model = ModelBuilder().build_model()
         assert model_params["name"].startswith(self.model[0].__class__.__name__), \
             f"Expected model name {model_params['name']}, got {self.model[0].__class__.__name__}"
-        Trainer(self.train_loader, self.test_loader).train(self.model, self.optimizer, 5, self.scheduler)
+        Trainer(self.train_loader, self.test_loader, 10).train(self.model, self.optimizer, 5, self.scheduler)
 
 
     def test_efficientnetB1_training(self):
@@ -64,7 +64,7 @@ class TestModelBuilder(ModelTest):
         self.model = ModelBuilder().build_model()
         assert model_params["name"].startswith(self.model[0].__class__.__name__), \
             f"Expected model name {model_params['name']}, got {self.model[0].__class__.__name__}"
-        Trainer(self.train_loader, self.test_loader).train(self.model, self.optimizer, 5, self.scheduler)
+        Trainer(self.train_loader, self.test_loader, 10).train(self.model, self.optimizer, 5, self.scheduler)
 
 
     def test_efficientnetB2_training(self):
@@ -73,7 +73,7 @@ class TestModelBuilder(ModelTest):
         self.model = ModelBuilder().build_model()
         assert model_params["name"].startswith(self.model[0].__class__.__name__), \
             f"Expected model name {model_params['name']}, got {self.model[0].__class__.__name__}"
-        Trainer(self.train_loader, self.test_loader).train(self.model, self.optimizer, 5, self.scheduler)
+        Trainer(self.train_loader, self.test_loader, 10).train(self.model, self.optimizer, 5, self.scheduler)
 
 
     def test_efficientnetB3_training(self):
@@ -82,7 +82,7 @@ class TestModelBuilder(ModelTest):
         self.model = ModelBuilder().build_model()
         assert model_params["name"].startswith(self.model[0].__class__.__name__), \
             f"Expected model name {model_params['name']}, got {self.model[0].__class__.__name__}"
-        Trainer(self.train_loader, self.test_loader).train(self.model, self.optimizer, 5, self.scheduler)
+        Trainer(self.train_loader, self.test_loader, 10).train(self.model, self.optimizer, 5, self.scheduler)
 
     def test_resnet18_training(self):
         model_params = wandb.config["model"]
@@ -90,7 +90,7 @@ class TestModelBuilder(ModelTest):
         self.model = ModelBuilder().build_model()
         assert model_params["name"].startswith(self.model[0].__class__.__name__), \
             f"Expected model name {model_params['name']}, got {self.model[0].__class__.__name__}"
-        Trainer(self.train_loader, self.test_loader).train(self.model, self.optimizer, 5, self.scheduler)
+        Trainer(self.train_loader, self.test_loader, 10).train(self.model, self.optimizer, 5, self.scheduler)
 
     def test_resnet34_training(self):
         model_params = wandb.config["model"]
@@ -98,7 +98,7 @@ class TestModelBuilder(ModelTest):
         self.model = ModelBuilder().build_model()
         assert model_params["name"].startswith(self.model[0].__class__.__name__), \
             f"Expected model name {model_params['name']}, got {self.model[0].__class__.__name__}"
-        Trainer(self.train_loader, self.test_loader).train(self.model, self.optimizer, 5, self.scheduler)
+        Trainer(self.train_loader, self.test_loader, 10).train(self.model, self.optimizer, 5, self.scheduler)
 
     def test_resnet50_training(self):
         model_params = wandb.config["model"]
@@ -106,7 +106,7 @@ class TestModelBuilder(ModelTest):
         self.model = ModelBuilder().build_model()
         assert model_params["name"].startswith(self.model[0].__class__.__name__), \
             f"Expected model name {model_params['name']}, got {self.model[0].__class__.__name__}"
-        Trainer(self.train_loader, self.test_loader).train(self.model, self.optimizer, 5, self.scheduler)
+        Trainer(self.train_loader, self.test_loader, 10).train(self.model, self.optimizer, 5, self.scheduler)
 
     def test_resnet101_training(self):
         model_params = wandb.config["model"]
@@ -114,7 +114,7 @@ class TestModelBuilder(ModelTest):
         self.model = ModelBuilder().build_model()
         assert model_params["name"].startswith(self.model[0].__class__.__name__), \
             f"Expected model name {model_params['name']}, got {self.model[0].__class__.__name__}"
-        Trainer(self.train_loader, self.test_loader).train(self.model, self.optimizer, 5, self.scheduler)
+        Trainer(self.train_loader, self.test_loader, 10).train(self.model, self.optimizer, 5, self.scheduler)
 
     def test_resnet152_training(self):
         model_params = wandb.config["model"]
@@ -122,7 +122,7 @@ class TestModelBuilder(ModelTest):
         self.model = ModelBuilder().build_model()
         assert model_params["name"].startswith(self.model[0].__class__.__name__), \
             f"Expected model name {model_params['name']}, got {self.model[0].__class__.__name__}"
-        Trainer(self.train_loader, self.test_loader).train(self.model, self.optimizer, 5, self.scheduler)
+        Trainer(self.train_loader, self.test_loader, 10).train(self.model, self.optimizer, 5, self.scheduler)
 
 
 if __name__ == '__main__':
