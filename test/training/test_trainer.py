@@ -236,6 +236,19 @@ class Test(MnistTest):
         trainer._Trainer__logging_infos["running_loss"] = 0
         trainer.device = torch.device("cpu")
 
+    def test_unfreeze(self):
+        wandb.run.name = "test_unfreeze"
+        wandb.config["training"].update({"cleanup_after_training": False, "unfreeze_after": 2})
+        trainer = Trainer(self.train_loader, self.test_loader, 10, self.test_loader)
+
+        self.model.parameters = MagicMock(return_value=[])
+        trainer.train(self.model, self.optimizer, 1)
+        assert self.model.parameters.call_count == 0, "expected 0 unfreeze attempts"
+
+        trainer.train(self.model, self.optimizer, 2)
+        assert self.model.parameters.call_count == 1, "expected 1 unfreeze attempts"
+
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -88,7 +88,7 @@ def load_latest(trainer: Trainer, model: nn.Module, optimizer: Optimizer) -> int
     cp_dir = generate_run_path()
     if wandb.config["training"]["warm_start"] and cp_dir:
         files = os.listdir(cp_dir)
-        epochs = [int(f[6:f.index(".")]) for f in files if not f.startswith("best")]
+        epochs = [int(f[6:f.index(".")]) for f in files if f.startswith("epoch")]
         if len(epochs) > 0:
             load_training_state(trainer, model, optimizer, f"epoch_{max(epochs)}.pth")
             return max(epochs) + 1

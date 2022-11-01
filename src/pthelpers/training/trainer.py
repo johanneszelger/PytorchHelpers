@@ -77,7 +77,8 @@ class Trainer:
             self.config["cp_base_path"] = None
         if "save_every_nth_epoch" not in self.config and "cp_base_path" in self.config:
             self.config["save_every_nth_epoch"] = 1
-
+        if "unfreeze_after" not in self.config:
+            self.config["unfreeze_after"] = None
         if "plot_class_dist" not in self.config:
             self.config["plot_class_dist"] = True
         if "log_interval_batches" not in self.config:
@@ -150,6 +151,10 @@ class Trainer:
 
 
     def __train_epoch(self, model: nn.Module, optimizer: Optimizer):
+        if self.config["unfreeze_after"] is not None and self.epoch == self.config["unfreeze_after"]:
+            print("unfreezing model")
+            self.__unfreeze_model__(model)
+
         model.train()
 
         with tqdm(self.train_dl, unit="batch") as tepoch:
@@ -294,6 +299,10 @@ class Trainer:
         if loss < self.best_validation_loss:
             from pthelpers.training.persist import save_training_state
             save_training_state(self, model, optimizer, "best.pth")
+
+    def __unfreeze_model__(self, model: nn.Module):
+        for param in model.parameters():
+            param.requires_grad = True
 
 
     def plot_class_dist(self):
