@@ -19,13 +19,10 @@ class PlotClassDistTest(MnistTest):
         plot_class_dist(self.train_loader, 10)
 
 
-    def test_plot_dataset(self) -> None:
-        plot_class_dist(self.train_loader, 10, force_original_data=True)
-
-
     class Data2d(Dataset):
         def __init__(self, dl):
             self.dl = dl
+            self.transform = None
 
 
         def __getitem__(self, index) -> T_co:
@@ -39,13 +36,7 @@ class PlotClassDistTest(MnistTest):
 
     def test_plot_dataloader_2d(self) -> None:
         dl = DataLoader(self.Data2d(self.train_loader), 500)
-        plot_class_dist(dl, 10, force_original_data=False)
-
-
-    def test_plot_dataset_2d(self) -> None:
-        dl = DataLoader(self.Data2d(self.train_loader), 500)
-        plot_class_dist(dl, 10, force_original_data=True)
-
+        plot_class_dist(dl, 10)
 
 
     def test_samples(self) -> None:
@@ -57,4 +48,4 @@ class PlotClassDistTest(MnistTest):
         sampler = WeightedRandomSampler(sample_weights, replacement=True, num_samples=len(data) * 10)
         dl = DataLoader(data, batch_size=500, sampler=sampler)
 
-        plot_class_dist(dl, 10, force_original_data=False)
+        plot_class_dist(dl, 10)
