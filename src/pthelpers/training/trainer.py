@@ -11,6 +11,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from pthelpers.plotting.class_dist import plot_class_dist
 from pthelpers.utils.reproducibility import get_seed
 
 
@@ -33,7 +34,7 @@ class Trainer:
     """
 
 
-    def __init__(self, train_dl: DataLoader, val_dl: DataLoader, test_dl: DataLoader = None,
+    def __init__(self, train_dl: DataLoader, val_dl: DataLoader, n_classes: int, test_dl: DataLoader = None,
                  loss_fn: nn.Module = None,
                  no_cuda: bool = False,
                  metrics: dict = None) -> None:
@@ -49,6 +50,7 @@ class Trainer:
         self.train_dl = train_dl
         self.val_dl = val_dl
         self.test_dl = test_dl
+        self.n_classes = n_classes
         self.metrics = metrics if metrics is not None else {}
         self.__val_metrics = copy.deepcopy(self.metrics)
 
@@ -74,6 +76,11 @@ class Trainer:
             self.config["cp_base_path"] = None
         if "save_every_nth_epoch" not in self.config and "cp_base_path" in self.config:
             self.config["save_every_nth_epoch"] = 1
+
+        if "plot_class_dist" not in self.config:
+            self.config["plot_class_dist"] = True
+        if "log_interval_batches" not in self.config:
+            self.config["plot_data_aug"] = True
 
 
     def __reset(self):
@@ -103,6 +110,9 @@ class Trainer:
         """
         if get_seed() is None:
             logging.getLogger().warning("No seed set, results might not be reproducible!")
+
+        self.plot_class_dist()
+        self.plot_data_aug()
 
         # prepare training
         self.__reset()
@@ -283,6 +293,12 @@ class Trainer:
         if loss < self.best_validation_loss:
             from pthelpers.training.persist import save_training_state
             save_training_state(self, model, optimizer, "best.pth")
+
+
+    def plot_class_dist(self):
+        if self.config["plt_class_dist"]:
+            plot_class_dist(self.train_dl, self.n_classes, True)
+            plot_class_dist(self.train_dl, self.n_classes, False)
 
 
 

@@ -184,7 +184,7 @@ class Test(MnistTest):
             # once for training log once for val
             assert wandblog.call_count == 2, f"Expected two calls, got {wandb.log.call_count}"
             self.assertDictEqual(wandblog.call_args_list[1].args[0],
-                                 {'v_loss': 0.123, 'acc': 0.534, 'epoch': 1, 'batch': 2, 'sample': 1000})
+                                 {'v_loss': 0.123, 'v_acc': 0.534, 'epoch': 1, 'batch': 2, 'sample': 1000})
 
 
     def test_cleanup(self):

@@ -33,9 +33,11 @@ class MnistTest(unittest.TestCase):
         train_data = datasets.MNIST('../data', train=True, download=True,
                                     transform=transform)
         train_data.data = train_data.data[:2*batch_size]
+        train_data.targets = train_data.targets[:2*batch_size]
         test_data = datasets.MNIST('../data', train=False,
                                    transform=transform)
         test_data.data = test_data.data[:2*batch_size]
+        test_data.targets = test_data.targets[:2*batch_size]
 
         self.train_loader = DataLoader(train_data, batch_size=batch_size)
         self.test_loader = DataLoader(test_data, batch_size=batch_size)

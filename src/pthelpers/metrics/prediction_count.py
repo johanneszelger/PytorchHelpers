@@ -23,7 +23,7 @@ class PredictionCount(Metric):
             preds: Predictions from model (logits, probabilities, or labels)
             target: Ground truth labels
         """
-        if len(preds.size()) == 1:
+        if preds.ndim == 1:
             self.count += (preds == self.label_value).sum()
         else:
             self.count += (preds.argmax(axis=1) == self.label_value).sum()

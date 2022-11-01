@@ -23,7 +23,7 @@ class LabelCount(Metric):
             preds: Predictions from model (logits, probabilities, or labels)
             target: Ground truth labels
         """
-        if len(target.size()) == 1:
+        if target.ndim == 1:
             self.count += (target == self.label_value).sum()
         else:
             self.count += target[:, self.label_value].sum()
