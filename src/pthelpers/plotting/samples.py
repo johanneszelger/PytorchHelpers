@@ -12,6 +12,8 @@ def plot_samples(dl: DataLoader, n_classes: int, data_name: str ="training"):
     n_cols = wandb.config["tbl_img_per_row"] if "tbl_img_per_row" in wandb.config else 5
     tbl = wandb.Table(columns=["sample_" + str(i) for i in range(n_cols)])
 
+    cls_names = wandb.config["class_names"] if "class_names" in wandb.config else np.arange(n_classes)
+
     g = torch.Generator()
     g.manual_seed(42)
     for i in range(n_classes):
@@ -23,7 +25,8 @@ def plot_samples(dl: DataLoader, n_classes: int, data_name: str ="training"):
 
         for data in loader:
             imgs = data[0]
-            tbl.add_data(*[wandb.Image(img) for img in imgs])
+
+            tbl.add_data(cls_names[i], *[wandb.Image(img) for img in imgs])
             break
 
     wandb.log({f"sample {data_name}images": tbl})
