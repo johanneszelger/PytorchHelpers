@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from pthelpers.plotting.class_dist import plot_class_dist
+from pthelpers.plotting.samples import plot_samples
 from pthelpers.utils.reproducibility import get_seed
 
 
@@ -302,7 +303,7 @@ class Trainer:
 
 
     def plot_data_aug(self):
-        pass
+        plot_samples(self.train_dl, self.n_classes, )
 
 
 
