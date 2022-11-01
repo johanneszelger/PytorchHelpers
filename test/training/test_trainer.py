@@ -133,8 +133,8 @@ class Test(MnistTest):
             trainer.train(self.model, self.optimizer, 3)
 
             assert trainer._Trainer__logging_infos["running_loss"] == 0
-            assert wandblog.call_count == 2, f"Expected two calls, got {wandb.log.call_count}"
-            self.assertDictEqual(wandblog.call_args_list[1].args[0],
+            assert wandblog.call_count == 3, f"Expected three calls, got {wandb.log.call_count}"
+            self.assertDictEqual(wandblog.call_args_list[2].args[0],
                                  {'t_loss': 1.23, 'lr': 0.001, 'acc': 0.534, 'epoch': 1, 'batch': 2, 'sample': 1000})
 
 
@@ -182,8 +182,8 @@ class Test(MnistTest):
 
             assert trainer.test.call_count == 1, f"Expected one call, got {trainer.test.call_count}"
             # once for training log once for val
-            assert wandblog.call_count == 3, f"Expected three calls, got {wandb.log.call_count}"
-            self.assertDictEqual(wandblog.call_args_list[2].args[0],
+            assert wandblog.call_count == 4, f"Expected four calls, got {wandb.log.call_count}"
+            self.assertDictEqual(wandblog.call_args_list[3].args[0],
                                  {'v_loss': 0.123, 'v_acc': 0.534, 'epoch': 1, 'batch': 2, 'sample': 1000})
 
 
