@@ -296,9 +296,14 @@ class Trainer:
 
 
     def plot_class_dist(self):
-        if self.config["plt_class_dist"]:
+        if self.config["plot_class_dist"]:
+            logging.getLogger("plotting class dist, depending on dataset this might take some time")
             plot_class_dist(self.train_dl, self.n_classes, True)
             plot_class_dist(self.train_dl, self.n_classes, False)
+
+
+    def plot_data_aug(self):
+        pass
 
 
 
