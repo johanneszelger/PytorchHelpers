@@ -28,4 +28,10 @@ def plot_class_dist(dl: DataLoader, n_classes: int, iter: int = 1, force_origina
     ax.set_title("original dist" if force_original_data else "sampled dist")
     ax.set_xlabel("Classes")
     ax.set_ylabel("Count")
-    wandb.log({"original dist" if force_original_data else "sampled dist": fig})
+    wandb.log({"original dist plotly" if force_original_data else "sampled dist plotly": wandb.Image(fig)})
+    wandb.log({"original dist" if force_original_data else "sampled dist": wandb.Image(fig)})
+
+    data = [[label, val] for (label, val) in zip(np.arange(0, n_classes), counts.numpy())]
+    table = wandb.Table(data=data, columns=["label", "value"])
+    wandb.log({"original dist wandb" if force_original_data else "sampled dist wandb":
+                   wandb.plot.bar(table, "label", "value", title="Custom Bar Chart")})
