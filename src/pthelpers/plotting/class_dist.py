@@ -28,4 +28,5 @@ def plot_class_dist(dl: DataLoader, n_classes: int, iter: int = 1, force_origina
     ax.set_title("original dist" if force_original_data else "sampled dist")
     ax.set_xlabel("Classes")
     ax.set_ylabel("Count")
+    fig.tight_layout()
     wandb.log({"original dist" if force_original_data else "sampled dist": wandb.Image(fig)})
