@@ -109,7 +109,7 @@ class Trainer:
         :return: None
         """
         if get_seed() is None:
-            logging.getLogger().warning("No seed set, results might not be reproducible!")
+            print("No seed set, results might not be reproducible!")
 
         self.plot_class_dist()
         self.plot_data_aug()
@@ -297,7 +297,7 @@ class Trainer:
 
     def plot_class_dist(self):
         if self.config["plot_class_dist"]:
-            logging.getLogger().info("plotting class dist, depending on dataset this might take some time")
+            print("plotting class dist, depending on dataset this might take some time")
             plot_class_dist(self.train_dl, self.n_classes)
 
 
