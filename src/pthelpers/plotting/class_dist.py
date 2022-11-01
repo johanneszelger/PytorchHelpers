@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import wandb
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
+from torchvision import datasets
 from torchvision.transforms import ToTensor
 
 
@@ -25,10 +26,15 @@ def plot_class_dist(dl: DataLoader, n_classes: int, iter: int = 1, batch_size: i
 
     fig = plot_counts(counts_source, n_classes, True)
     fig2 = plot_counts(counts_sampled, n_classes, False)
-    tbl = wandb.Table(data=[[fig, fig2]], columns=["original data", "sampled data"])
 
-    wandb.log({"class dist": tbl})
+    o_cols = ["c_" + str(i) for i in range(n_classes)]
 
+    dist_table = wandb.Table(columns=o_cols)
+    dist_table.add_data(*counts_source)
+    dist_table.add_data(*counts_sampled)
+
+    fig_table = wandb.Table(data=[[wandb.Image(fig), wandb.Image(fig2)]], columns=["original data", "sampled data"])
+    wandb.log({"data distribution table": dist_table, "data distribution plots": fig_table})
 
 def plot_counts(counts: torch.Tensor, n_classes: int, original: bool):
     fig, ax = plt.subplots()
@@ -55,3 +61,16 @@ def count_source(n_classes: int, source):
             else:
                 counts += label.reshape(len(label)).bincount(minlength=n_classes)
     return counts
+
+
+if __name__ == '__main__':
+    wandb.init(project="dev")
+
+    train_data = datasets.MNIST('../data', train=True, download=True)
+
+    weights = [0.1, 1, 2, 3, 4, 3, 2, 1, 0.1, 1]
+    samples_weight = [weights[t] for t in train_data.targets]
+    sampler = WeightedRandomSampler(weights, 10000)
+    loader = DataLoader(train_data, batch_size=512, sampler=sampler)
+
+    plot_class_dist(loader, 10)
