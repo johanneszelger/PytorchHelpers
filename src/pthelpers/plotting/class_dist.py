@@ -23,8 +23,9 @@ def plot_class_dist(dl: DataLoader, n_classes: int, iter: int = 1, force_origina
                 else:
                     counts += label.reshape(len(label)).bincount(minlength=10)
 
-    plt.bar(np.arange(0, n_classes), counts.numpy())
-    plt.title("original dist" if force_original_data else "sampled dist")
-    plt.xlabel("Classes")
-    plt.ylabel("Count")
-    wandb.log({"original dist" if force_original_data else "sampled dist": plt.figure})
+    fig, ax = plt.subplots()
+    ax.bar(np.arange(0, n_classes), counts.numpy())
+    ax.set_title("original dist" if force_original_data else "sampled dist")
+    ax.set_xlabel("Classes")
+    ax.set_ylabel("Count")
+    wandb.log({"original dist" if force_original_data else "sampled dist": fig})
