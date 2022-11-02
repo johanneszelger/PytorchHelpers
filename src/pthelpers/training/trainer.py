@@ -12,7 +12,6 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from pthelpers.plotting.class_dist import plot_class_dist
-from pthelpers.plotting.samples import plot_samples
 from pthelpers.utils.reproducibility import get_seed
 
 
@@ -69,22 +68,29 @@ class Trainer:
             self.config["print_logs"] = True
         if "dry_run" not in self.config:
             self.config["dry_run"] = False
+
         if "warm_start" not in self.config:
             self.config["warm_start"] = True
-        if "cleanup_after_training" not in self.config:
-            self.config["cleanup_after_training"] = True
         if "cp_base_path" not in self.config:
             self.config["cp_base_path"] = None
         if "save_every_nth_epoch" not in self.config and "cp_base_path" in self.config:
             self.config["save_every_nth_epoch"] = 1
+        if "cleanup_after_training" not in self.config:
+            self.config["cleanup_after_training"] = True
+
         if "unfreeze_after" not in self.config:
             self.config["unfreeze_after"] = None
+
         if "plot_class_dist" not in self.config:
             self.config["plot_class_dist"] = True
         if "plot_samples" not in self.config:
             self.config["plot_samples"] = True
-        if "log_interval_batches" not in self.config:
-            self.config["plot_data_aug"] = True
+        if "plot_samples_training_start" not in self.config:
+            self.config["plot_samples_training_start"] = True
+        if "plot_samples_training_log" not in self.config:
+            self.config["plot_samples_training_log"] = True
+        if "plot_samples_validation_log" not in self.config:
+            self.config["plot_samples_validation_log"] = True
 
 
     def __reset(self):
@@ -116,7 +122,8 @@ class Trainer:
             print("No seed set, results might not be reproducible!")
 
         self.plot_class_dist()
-        self.plot_data_aug()
+        if self.config["plot_samples_training_start"]:
+            self.plot_data(self.train_dl, "training start")
 
         # prepare training
         self.__reset()
@@ -132,7 +139,7 @@ class Trainer:
             if scheduler is not None:
                 scheduler.step()
 
-            end_of_epoch_logged = self.__epoch_end_training_log(optimizer)
+            end_of_epoch_logged = self.__epoch_end_training_log(optimizer, model)
             self.__epoch_end_validation(model, optimizer)
 
             if "save_every_nth_epoch" in self.config and self.epoch % self.config["save_every_nth_epoch"] == 0:
@@ -182,7 +189,7 @@ class Trainer:
 
                 tepoch.set_postfix(loss=loss.item())
 
-                if self.__inter_epoch_training_log(optimizer) and self.config["dry_run"]:
+                if self.__inter_epoch_training_log(optimizer, model) and self.config["dry_run"]:
                     return False
 
                 self.__inter_epoch_validation(model, optimizer)
@@ -225,22 +232,22 @@ class Trainer:
         return test_loss
 
 
-    def __inter_epoch_training_log(self, optimzer: Optimizer) -> bool:
+    def __inter_epoch_training_log(self, optimzer: Optimizer, model: nn.Module) -> bool:
         if self.config["log_interval_batches"] is not None \
                 and self.batch % self.config["log_interval_batches"] == 0:
-            self.__training_log(optimzer)
+            self.__training_log(optimzer, model)
             return True
         return False
 
 
-    def __epoch_end_training_log(self, optimzer: Optimizer) -> bool:
+    def __epoch_end_training_log(self, optimzer: Optimizer, model: nn.Module) -> bool:
         if self.config["log_interval_batches"] is None:
-            self.__training_log(optimzer)
+            self.__training_log(optimzer, model)
             return True
         return False
 
 
-    def __training_log(self, optimizer: Optimizer) -> None:
+    def __training_log(self, optimizer: Optimizer, model: nn.Module) -> None:
         batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch - 1))
         batches_since_last_log = self.config["log_interval_batches"] if self.config["log_interval_batches"] is not None \
             else len(self.train_dl)
@@ -256,12 +263,15 @@ class Trainer:
             data[name] = metric.compute().item()
             metric.reset()
 
-        self.__wandb_log(data)
+        self.wandb_log(data)
 
         self.__logging_infos["running_loss"] = 0
 
+        if self.config["plot_samples_training_log"]:
+            self.plot_data(self.train_dl, "training", model)
 
-    def __wandb_log(self, data: dict):
+
+    def wandb_log(self, data: dict):
         data["epoch"] = self.batch / len(self.train_dl)
         data["batch"] = self.batch
         data["sample"] = self.sample
@@ -296,11 +306,14 @@ class Trainer:
         for name, metric in self.__val_metrics.items():
             data["v_" + name] = metric.compute().item()
 
-        self.__wandb_log(data)
+        self.wandb_log(data)
 
         if loss < self.best_validation_loss:
             from pthelpers.training.persist import save_training_state
             save_training_state(self, model, optimizer, "best.pth")
+
+        if self.config["plot_samples_validation_log"]:
+            self.plot_data(self.val_dl, "validation", model)
 
     def __unfreeze_model__(self, model: nn.Module):
         for param in model.parameters():
@@ -313,9 +326,13 @@ class Trainer:
             plot_class_dist(self.train_dl, self.n_classes)
 
 
-    def plot_data_aug(self):
+    def plot_data(self, dl: DataLoader, name: str, model: nn.Module=None):
+        from pthelpers.plotting.samples import plot_samples, plot_samples_with_predictions
         if self.config["plot_samples"]:
-            plot_samples(self.train_dl, self.n_classes, )
+            if(model is None):
+                plot_samples(dl, self.n_classes, name)
+            else:
+                plot_samples_with_predictions(self, dl, self.n_classes, name, model)
 
 
 
