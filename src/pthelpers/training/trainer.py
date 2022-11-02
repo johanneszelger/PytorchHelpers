@@ -81,6 +81,8 @@ class Trainer:
             self.config["unfreeze_after"] = None
         if "plot_class_dist" not in self.config:
             self.config["plot_class_dist"] = True
+        if "plot_samples" not in self.config:
+            self.config["plot_samples"] = True
         if "log_interval_batches" not in self.config:
             self.config["plot_data_aug"] = True
 
@@ -312,7 +314,8 @@ class Trainer:
 
 
     def plot_data_aug(self):
-        plot_samples(self.train_dl, self.n_classes, )
+        if self.config["plot_samples"]:
+            plot_samples(self.train_dl, self.n_classes, )
 
 
 
