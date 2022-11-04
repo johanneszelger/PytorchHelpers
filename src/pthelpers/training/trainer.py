@@ -342,7 +342,7 @@ class Trainer:
             self.plot_data(self.val_dl, "validation", model)
 
         if self.config["plot"] and self.config["plot_confusion_validation_log"]:
-            self.wandb_log({"conf_mat": wandb.plot.confusion_matrix(probs=None,
+            self.wandb_log({"v_conf_mat": wandb.plot.confusion_matrix(probs=None,
                                                                     y_true=targets.numpy(), preds=outputs.numpy().argmax(axis=-1),
                                                                     class_names=get_class_names(self.n_classes))})
 
