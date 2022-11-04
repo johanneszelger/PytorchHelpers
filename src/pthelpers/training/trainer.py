@@ -84,8 +84,8 @@ class Trainer:
 
         if "plot_class_dist" not in self.config:
             self.config["plot_class_dist"] = True
-        if "plot_samples" not in self.config:
-            self.config["plot_samples"] = True
+        if "plot" not in self.config:
+            self.config["plot"] = True
         if "plot_samples_training_start" not in self.config:
             self.config["plot_samples_training_start"] = True
         if "plot_samples_training_log" not in self.config:
@@ -288,7 +288,7 @@ class Trainer:
         if self.config["plot_samples_training_log"]:
             self.plot_data(self.train_dl, "training", model)
 
-        if self.config["plot_samples"] and self.config["plot_confusion_training_log"]:
+        if self.config["plot"] and self.config["plot_confusion_training_log"]:
             self.wandb_log({"conf_mat": wandb.plot.confusion_matrix(probs=None,
                                                                     y_true=self.collected_targets.numpy(),
                                                                     preds=self.collected_outputs.numpy().argmax(axis=-1),
@@ -341,7 +341,7 @@ class Trainer:
         if self.config["plot_samples_validation_log"]:
             self.plot_data(self.val_dl, "validation", model)
 
-        if self.config["plot_samples"] and self.config["plot_confusion_validation_log"]:
+        if self.config["plot"] and self.config["plot_confusion_validation_log"]:
             self.wandb_log({"conf_mat": wandb.plot.confusion_matrix(probs=None,
                                                                     y_true=targets.numpy(), preds=outputs.numpy().argmax(axis=-1),
                                                                     class_names=get_class_names(self.n_classes))})
@@ -353,14 +353,14 @@ class Trainer:
 
 
     def plot_class_dist(self):
-        if self.config["plot_class_dist"]:
+        if self.config["plot"] and self.config["plot_class_dist"]:
             print("plotting class dist, depending on dataset this might take some time")
             plot_class_dist(self.train_dl, self.n_classes)
 
 
     def plot_data(self, dl: DataLoader, name: str, model: nn.Module = None):
         from pthelpers.plotting.samples import plot_samples, plot_samples_with_predictions
-        if self.config["plot_samples"]:
+        if self.config["plot"]:
             if (model is None):
                 plot_samples(dl, self.n_classes, name)
             else:
