@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 from torchvision import datasets
 from torchvision.transforms import ToTensor
 
-from build.lib.pthelpers.models import SimpleNet
+from pthelpers.models import SimpleNet
 from pthelpers.training import Trainer
 from pthelpers.utils.class_names import get_class_names
 

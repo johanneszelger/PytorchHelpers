@@ -82,10 +82,10 @@ class Trainer:
         if "unfreeze_after" not in self.config:
             self.config["unfreeze_after"] = None
 
-        if "plot_class_dist" not in self.config:
-            self.config["plot_class_dist"] = True
         if "plot" not in self.config:
             self.config["plot"] = True
+        if "plot_class_dist" not in self.config:
+            self.config["plot_class_dist"] = False
         if "plot_samples_training_start" not in self.config:
             self.config["plot_samples_training_start"] = True
         if "plot_samples_training_log" not in self.config:
