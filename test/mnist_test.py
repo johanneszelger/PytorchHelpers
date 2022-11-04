@@ -48,7 +48,7 @@ class MnistTest(unittest.TestCase):
 
     def setUp(self) -> None:
         wandb.init(mode="disabled")
-        wandb.config.update({"training": {"cp_base_path": "checkpoints"}})
+        wandb.config.update({"training": {"cp_base_path": "checkpoints", "plot_class_dist": False, "plot_samples": False}})
         torch.manual_seed(42)
 
 

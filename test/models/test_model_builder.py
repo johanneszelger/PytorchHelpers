@@ -14,7 +14,7 @@ class TestModelBuilder(ModelTest):
 
     def setUp(self) -> None:
         super(TestModelBuilder, self).setUp()
-        wandb.config.update({"model": {}})
+        wandb.config.update({"model": {"num_classes": 10}})
 
 
     def tearDown(self) -> None:
@@ -30,7 +30,6 @@ class TestModelBuilder(ModelTest):
         model_params["num_init_features"] = 64
         model_params["bn_size"] = 4
         model_params["drop_rate"] = 0
-        model_params["num_classes"] = 1000
         model_params["memory_efficient"] = False
 
         self.model = ModelBuilder().build_model()
@@ -42,6 +41,7 @@ class TestModelBuilder(ModelTest):
     def test_densenet121_training(self):
         model_params = wandb.config["model"]
         model_params["name"] = "DenseNet121"
+        model_params["num_classes"] = 10
 
         self.model = ModelBuilder().build_model()
         assert model_params["name"].startswith(self.model[0].__class__.__name__), \
@@ -52,6 +52,8 @@ class TestModelBuilder(ModelTest):
     def test_efficientnetB0_training(self):
         model_params = wandb.config["model"]
         model_params["name"] = "EfficientNetB0"
+        model_params["num_classes"] = 10
+
         self.model = ModelBuilder().build_model()
         assert model_params["name"].startswith(self.model[0].__class__.__name__), \
             f"Expected model name {model_params['name']}, got {self.model[0].__class__.__name__}"

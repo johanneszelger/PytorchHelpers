@@ -9,6 +9,7 @@ from torchvision.transforms import ToTensor
 
 from build.lib.pthelpers.models import SimpleNet
 from pthelpers.training import Trainer
+from pthelpers.utils.class_names import get_class_names
 
 
 def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training"):
@@ -16,7 +17,7 @@ def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training"):
     n_cols = wandb.config["samples_per_row"] if "samples_per_row" in wandb.config else 5
     tbl = wandb.Table(columns=["cls"] + ["sample_" + str(i + 1) for i in range(n_cols)])
 
-    cls_names = wandb.config["class_names"] if "class_names" in wandb.config else np.arange(n_classes)
+    cls_names = get_class_names(n_classes)
 
     g = torch.Generator()
     g.manual_seed(42)
@@ -42,7 +43,7 @@ def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: i
         n_samples = wandb.config["pred_plot_samples_per_class"] if "pred_plot_samples_per_class" in wandb.config else 50
         tbl = wandb.Table(columns=["image", "label", "pred"])
 
-        cls_names = wandb.config["class_names"] if "class_names" in wandb.config else np.arange(n_classes)
+        cls_names = get_class_names(n_classes)
 
         g = torch.Generator()
         g.manual_seed(42)

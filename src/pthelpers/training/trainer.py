@@ -1,17 +1,18 @@
 import copy
 import logging
-from typing import Union
+from typing import Union, Tuple
 
 import torch
 import torch.nn.functional as F
 import wandb
-from torch import nn
+from torch import nn, Tensor
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from pthelpers.plotting.class_dist import plot_class_dist
+from pthelpers.utils.class_names import get_class_names
 from pthelpers.utils.reproducibility import get_seed
 
 
@@ -91,12 +92,19 @@ class Trainer:
             self.config["plot_samples_training_log"] = True
         if "plot_samples_validation_log" not in self.config:
             self.config["plot_samples_validation_log"] = True
+        if "plot_confusion_training_log" not in self.config:
+            self.config["plot_confusion_training_log"] = True
+        if "plot_confusion_validation_log" not in self.config:
+            self.config["plot_confusion_validation_log"] = True
 
 
     def __reset(self):
         self.epoch = 0
         self.batch = 0
         self.sample = 0
+
+        self.collected_targets = Tensor([]).detach()
+        self.collected_outputs = Tensor([]).detach()
 
 
     def __to(self, device, model):
@@ -135,20 +143,11 @@ class Trainer:
 
         # train for x epochs
         for self.epoch in range(start_epoch, epochs + 1):
-            result = self.__train_epoch(model, optimizer)
+            resume = self.__train_epoch(model, optimizer)
             if scheduler is not None:
                 scheduler.step()
 
-            end_of_epoch_logged = self.__epoch_end_training_log(optimizer, model)
-            self.__epoch_end_validation(model, optimizer)
-
-            if "save_every_nth_epoch" in self.config and self.epoch % self.config["save_every_nth_epoch"] == 0:
-                from pthelpers.training.persist import save_training_state
-                save_training_state(self, model, optimizer)
-
-            if not result:
-                break
-            if end_of_epoch_logged and self.config["dry_run"]:
+            if not resume:
                 break
 
         # training is done, test the model
@@ -171,6 +170,8 @@ class Trainer:
             for batch_idx, samples in enumerate(tepoch, 0):
                 data = samples[0]
                 target = samples[1]
+                self.collected_targets = torch.cat((self.collected_targets, target.detach())) if target.ndim == 1 else \
+                    torch.cat((self.collected_targets, target.detach().argmax(axis=-1)))
                 paths = (samples + [None])[2]
 
                 self.batch += 1
@@ -179,6 +180,7 @@ class Trainer:
                 data, target = data.to(self.device), target.to(self.device)
                 optimizer.zero_grad()
                 output = model(data)
+                self.collected_outputs = torch.cat((self.collected_outputs, output.detach().cpu()))
                 loss = self.loss_fn(output, target)
                 loss.backward()
                 optimizer.step()
@@ -194,10 +196,20 @@ class Trainer:
 
                 self.__inter_epoch_validation(model, optimizer)
 
+        end_of_epoch_logged = self.__epoch_end_training_log(optimizer, model)
+        self.__epoch_end_validation(model, optimizer)
+
+        if "save_every_nth_epoch" in self.config and self.epoch % self.config["save_every_nth_epoch"] == 0:
+            from pthelpers.training.persist import save_training_state
+            save_training_state(self, model, optimizer)
+
+        if end_of_epoch_logged and self.config["dry_run"]:
+            return False
+
         return True
 
 
-    def test(self, model: nn.Module, test_loader: DataLoader, metrics: Union[dict, None] = None) -> float:
+    def test(self, model: nn.Module, test_loader: DataLoader, metrics: Union[dict, None] = None) -> Tuple[int, Tensor, Tensor]:
         """
         Tests a model
         :param model: model to test
@@ -215,13 +227,18 @@ class Trainer:
         test_loss = 0
 
         with torch.no_grad():
+
+            targets = Tensor([])
+            outputs = Tensor([])
             for samples in test_loader:
                 data = samples[0]
                 target = samples[1]
+                targets = torch.cat((targets, target)) if target.ndim == 1 else torch.cat((targets, target.argmax(axis=-1)))
                 paths = (samples + [None])[2]
 
                 data, target = data.to(self.device), target.to(self.device)
                 output = model(data)
+                outputs = torch.cat((outputs, output.cpu()))
                 test_loss += self.loss_fn(output, target).item()
 
                 for name, metric in metrics.items():
@@ -229,7 +246,8 @@ class Trainer:
 
         test_loss /= len(test_loader)
 
-        return test_loss
+        model.train()
+        return test_loss, targets, outputs
 
 
     def __inter_epoch_training_log(self, optimzer: Optimizer, model: nn.Module) -> bool:
@@ -270,6 +288,14 @@ class Trainer:
         if self.config["plot_samples_training_log"]:
             self.plot_data(self.train_dl, "training", model)
 
+        if self.config["plot_samples"] and self.config["plot_confusion_training_log"]:
+            self.wandb_log({"conf_mat": wandb.plot.confusion_matrix(probs=None,
+                                                                    y_true=self.collected_targets.numpy(),
+                                                                    preds=self.collected_outputs.numpy().argmax(axis=-1),
+                                                                    class_names=get_class_names(self.n_classes))})
+        self.collected_targets = Tensor([]).detach()
+        self.collected_outputs = Tensor([]).detach()
+
 
     def wandb_log(self, data: dict):
         data["epoch"] = self.batch / len(self.train_dl)
@@ -294,7 +320,7 @@ class Trainer:
 
 
     def __validate(self, model: nn.Module, optimizer: Optimizer) -> None:
-        loss = self.test(model, self.val_dl, self.__val_metrics)
+        loss, targets, outputs = self.test(model, self.val_dl, self.__val_metrics)
 
         batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch - 1))
         if self.config["print_logs"]:
@@ -315,6 +341,12 @@ class Trainer:
         if self.config["plot_samples_validation_log"]:
             self.plot_data(self.val_dl, "validation", model)
 
+        if self.config["plot_samples"] and self.config["plot_confusion_validation_log"]:
+            self.wandb_log({"conf_mat": wandb.plot.confusion_matrix(probs=None,
+                                                                    y_true=targets.numpy(), preds=outputs.numpy().argmax(axis=-1),
+                                                                    class_names=get_class_names(self.n_classes))})
+
+
     def __unfreeze_model__(self, model: nn.Module):
         for param in model.parameters():
             param.requires_grad = True
@@ -326,13 +358,10 @@ class Trainer:
             plot_class_dist(self.train_dl, self.n_classes)
 
 
-    def plot_data(self, dl: DataLoader, name: str, model: nn.Module=None):
+    def plot_data(self, dl: DataLoader, name: str, model: nn.Module = None):
         from pthelpers.plotting.samples import plot_samples, plot_samples_with_predictions
         if self.config["plot_samples"]:
-            if(model is None):
+            if (model is None):
                 plot_samples(dl, self.n_classes, name)
             else:
                 plot_samples_with_predictions(self, dl, self.n_classes, name, model)
-
-
-

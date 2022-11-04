@@ -6,9 +6,11 @@ from unittest.mock import MagicMock
 
 import torch
 import wandb
+from torch import Tensor
 from torchmetrics import Accuracy
 from torchmetrics.classification import MulticlassAccuracy
 
+from pthelpers.training.persist import save_training_state
 from test.mnist_test import MnistTest
 from pthelpers.training import Trainer
 
@@ -36,11 +38,6 @@ class Test(MnistTest):
         # since we mocked the train epoch method
         assert trainer.test.call_count == 0, f"Expected zero calls for test, got {trainer.test.call_count}"
 
-        cp_dir = os.path.join("checkpoints", "test_train")
-        files = os.listdir(cp_dir)
-        # every epoch, no validation cp because mocked
-        assert len(files) == epochs, f"Expected {epochs} epoch checkpoints, got {len(files)}"
-
 
     def test_train_epoch(self):
         wandb.run.name = "test_train_epoch"
@@ -59,19 +56,22 @@ class Test(MnistTest):
 
         trainer.metrics["acc"] = MulticlassAccuracy(10)
         trainer.metrics["acc"].update = MagicMock()
+        trainer._Trainer__val_metrics["acc"] = MulticlassAccuracy(10)
+        trainer._Trainer__val_metrics["acc"].update = MagicMock()
 
         trainer._Trainer__inter_epoch_training_log = MagicMock(return_value=True)
         trainer._Trainer__inter_epoch_validation = MagicMock()
 
         self.__prepare_trainer_for_direct_train(trainer)
-        trainer._Trainer__train_epoch(self.model, self.optimizer)
+        assert trainer._Trainer__train_epoch(self.model, self.optimizer)
 
         assert self.model.training
         assert self.optimizer.step.call_count == 2
         assert self.optimizer.zero_grad.call_count == 2
-        assert trainer.loss_fn.call_count == 2
+        assert trainer.loss_fn.call_count == 4
         assert loss.backward.call_count == 2
         assert trainer.metrics["acc"].update.call_count == 2
+        assert trainer._Trainer__val_metrics["acc"].update.call_count == 2
         assert trainer._Trainer__inter_epoch_training_log.call_count == 2
         assert trainer._Trainer__inter_epoch_validation.call_count == 2
         assert trainer._Trainer__logging_infos["running_loss"] == 2.46
@@ -133,8 +133,8 @@ class Test(MnistTest):
             trainer.train(self.model, self.optimizer, 3)
 
             assert trainer._Trainer__logging_infos["running_loss"] == 0
-            assert wandblog.call_count == 3, f"Expected three calls, got {wandb.log.call_count}"
-            self.assertDictEqual(wandblog.call_args_list[2].args[0],
+            assert wandblog.call_count == 1, f"Expected three calls, got {wandb.log.call_count}"
+            self.assertDictEqual(wandblog.call_args_list[0].args[0],
                                  {'t_loss': 1.23, 'lr': 0.001, 'acc': 0.534, 'epoch': 1, 'batch': 2, 'sample': 1000})
 
 
@@ -167,7 +167,7 @@ class Test(MnistTest):
         # now test if real logging works
         wandb.config["training"].update({"log_interval_batches": None, "dry_run": True, "val_interval_batches": None})
         with mock.patch.object(wandb, 'log') as wandblog:
-            trainer.test = MagicMock(return_value=0.123)
+            trainer.test = MagicMock(return_value=(0.123, Tensor([]), Tensor([])))
             trainer._Trainer__val_metrics["acc"] = MulticlassAccuracy(10)
             computed = Dummy()
             trainer._Trainer__val_metrics["acc"].compute = MagicMock(return_value=computed)
@@ -182,8 +182,8 @@ class Test(MnistTest):
 
             assert trainer.test.call_count == 1, f"Expected one call, got {trainer.test.call_count}"
             # once for training log once for val
-            assert wandblog.call_count == 4, f"Expected four calls, got {wandb.log.call_count}"
-            self.assertDictEqual(wandblog.call_args_list[3].args[0],
+            assert wandblog.call_count == 2, f"Expected four calls, got {wandb.log.call_count}"
+            self.assertDictEqual(wandblog.call_args_list[1].args[0],
                                  {'v_loss': 0.123, 'v_acc': 0.534, 'epoch': 1, 'batch': 2, 'sample': 1000})
 
 
@@ -210,6 +210,7 @@ class Test(MnistTest):
         epochs = 1
         trainer._Trainer__train_epoch = MagicMock()
         trainer.train(self.model, self.optimizer, epochs)
+        save_training_state(trainer, self.model, self.optimizer)
 
         # one epoch
         files = os.listdir(cp_dir)
@@ -219,6 +220,7 @@ class Test(MnistTest):
         # add one epoch
         epochs = 2
         trainer.train(self.model, self.optimizer, epochs)
+        save_training_state(trainer, self.model, self.optimizer)
         assert trainer._Trainer__train_epoch.call_count == epochs
         files = os.listdir(cp_dir)
         assert len(files) == 2, f"Expected {epochs} epoch checkpoints, got {len(files)}"
