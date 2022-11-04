@@ -59,8 +59,8 @@ def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: i
                 imgs = data[0][:sub_batch_size].to(trainer.device)
                 targets = data[1][:sub_batch_size]
                 preds = model(imgs).cpu().numpy().argmax(axis=1)
-                [tbl.add_data(wandb.Image(imgs[i]), cls_names[targets[i]], cls_names[preds[i]]) for i in range(len(imgs))]
-                if n_samples - (j + 1) * batch_size == 0:
+                [tbl.add_data(wandb.Image(imgs[i]), cls_names[targets[i].argmax()], cls_names[preds[i]]) for i in range(len(imgs))]
+                if n_samples - (j + 1) * batch_size <= 0:
                     break
 
     trainer.wandb_log({f"{data_name} predictions": tbl})
