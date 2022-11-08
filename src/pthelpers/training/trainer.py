@@ -297,15 +297,17 @@ class Trainer:
 
 
     def wandb_log(self, data: dict, add_prefix: str = None):
-        data["Hidden Panels/epoch"] = self.batch / len(self.train_dl)
-        data["Hidden Panels/batch"] = self.batch
-        data["Hidden Panels/sample"] = self.sample
         prefixed_data = {}
         if add_prefix is not None:
             for k, v in data.items():
                 prefixed_data[add_prefix + k] = v
         else:
             prefixed_data = data
+
+        prefixed_data["Hidden Panels/epoch"] = self.batch / len(self.train_dl)
+        prefixed_data["Hidden Panels/batch"] = self.batch
+        prefixed_data["Hidden Panels/sample"] = self.sample
+
         wandb.log(prefixed_data)
 
 

@@ -135,7 +135,8 @@ class Test(MnistTest):
             assert trainer._Trainer__logging_infos["running_loss"] == 0
             assert wandblog.call_count == 1, f"Expected three calls, got {wandb.log.call_count}"
             self.assertDictEqual(wandblog.call_args_list[0].args[0],
-                                 {'t_loss': 1.23, 'lr': 0.001, 'acc': 0.534, 'epoch': 1, 'batch': 2, 'sample': 1000})
+                                 {'training results/t_loss': 1.23, 'training results/lr': 0.001, 'training results/acc': 0.534,
+                                  'Hidden Panels/epoch': 1, 'Hidden Panels/batch': 2, 'Hidden Panels/sample': 1000})
 
 
     def test_validation_interval(self):
@@ -184,7 +185,7 @@ class Test(MnistTest):
             # once for training log once for val
             assert wandblog.call_count == 2, f"Expected four calls, got {wandb.log.call_count}"
             self.assertDictEqual(wandblog.call_args_list[1].args[0],
-                                 {'v_loss': 0.123, 'v_acc': 0.534, 'epoch': 1, 'batch': 2, 'sample': 1000})
+                                 {'validation results/v_loss': 0.123, 'validation results/v_acc': 0.534, 'Hidden Panels/epoch': 1, 'Hidden Panels/batch': 2, 'Hidden Panels/sample': 1000})
 
 
     def test_cleanup(self):
