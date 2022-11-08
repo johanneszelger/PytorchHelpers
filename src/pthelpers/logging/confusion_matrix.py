@@ -50,12 +50,6 @@ def confusion_matrix(
     for i in range(len(preds)):
         counts[class_mapping[y_true[i]], class_mapping[preds[i]]] += 1
 
-    data = []
-    for i in range(n_classes):
-        for j in range(n_classes):
-            data.append([trainer.sample, class_names[i], class_names[j], counts[i, j]])
-
-
     fields = {
         "Actual": "Actual",
         "Predicted": "Predicted",
@@ -65,11 +59,11 @@ def confusion_matrix(
     data = []
     for i in range(n_classes):
         for j in range(n_classes):
-            data.append([trainer.sample, class_names[i], class_names[j], counts[i, j]])
+            data.append([class_names[i], class_names[j], counts[i, j]])
 
     return trainer.wandb_log({f"{panel + '/' if panel is not None else ''}test": wandb.plot_table(
         "jz90/stepped_cm",
-        wandb.Table(columns=["Step", "Actual", "Predicted", "nPredictions"], data=data),
+        wandb.Table(columns=["Actual", "Predicted", "nPredictions"], data=data),
         fields,
         {"title": title},
     )})
