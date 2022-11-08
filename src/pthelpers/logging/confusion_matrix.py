@@ -14,7 +14,6 @@ from pthelpers.models import SimpleNet
 from pthelpers.training import Trainer
 from pthelpers.utils.class_names import get_class_names
 
-historic_data = {}
 
 def confusion_matrix(
     trainer: Trainer, table_name: str,
@@ -51,24 +50,22 @@ def confusion_matrix(
     for i in range(len(preds)):
         counts[class_mapping[y_true[i]], class_mapping[preds[i]]] += 1
 
-    if table_name in historic_data:
-        data = historic_data[table_name]
-    else:
-        data = []
-        historic_data[table_name] = data
-
+    data = []
     for i in range(n_classes):
         for j in range(n_classes):
             data.append([trainer.sample, class_names[i], class_names[j], counts[i, j]])
 
-    # wandb.log({table_name: wandb.Table(columns=["Sample", "Actual", "Predicted", "nPredictions"], data=data)})
 
     fields = {
         "Actual": "Actual",
         "Predicted": "Predicted",
         "nPredictions": "nPredictions",
     }
-    title = title or ""
+
+    data = []
+    for i in range(n_classes):
+        for j in range(n_classes):
+            data.append([trainer.sample, class_names[i], class_names[j], counts[i, j]])
 
     return trainer.wandb_log({f"{panel + '/' if panel is not None else ''}test": wandb.plot_table(
         "jz90/stepped_cm",
