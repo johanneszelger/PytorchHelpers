@@ -33,10 +33,11 @@ def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training"):
             tbl.add_data(cls_names[i], *[wandb.Image(img) for img in imgs])
             break
 
-    wandb.log({f"sample {data_name} images": tbl})
+    wandb.log({f"data/sample {data_name} images": tbl})
 
 
-def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: int, data_name: str, model: nn.Module, batch_size=32):
+def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: int, data_name: str, model: nn.Module, batch_size=32,
+                                  panel: str = None):
     model.eval()
     with torch.no_grad():
         dataset = dl.dataset
@@ -63,7 +64,7 @@ def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: i
                 if n_samples - (j + 1) * batch_size <= 0:
                     break
 
-    trainer.wandb_log({f"{data_name} predictions": tbl})
+    trainer.wandb_log({f"{panel + '/' if panel is not None else ''}{data_name} predictions": tbl})
     model.train()
 
 

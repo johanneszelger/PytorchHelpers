@@ -131,7 +131,7 @@ class Trainer:
 
         self.plot_class_dist()
         if self.config["plot_samples_training_start"]:
-            self.plot_data(self.train_dl, "training start")
+            self.plot_data(self.train_dl, "training start", panel="data")
 
         # prepare training
         self.__reset()
@@ -281,7 +281,7 @@ class Trainer:
             data[name] = metric.compute().item()
             metric.reset()
 
-        self.wandb_log(data)
+        self.wandb_log(data, "training results/")
 
         self.__logging_infos["running_loss"] = 0
 
@@ -296,11 +296,17 @@ class Trainer:
         self.collected_outputs = Tensor([]).detach()
 
 
-    def wandb_log(self, data: dict):
-        data["epoch"] = self.batch / len(self.train_dl)
-        data["batch"] = self.batch
-        data["sample"] = self.sample
-        wandb.log(data)
+    def wandb_log(self, data: dict, add_prefix: str = None):
+        data["Hidden Panels/epoch"] = self.batch / len(self.train_dl)
+        data["Hidden Panels/batch"] = self.batch
+        data["Hidden Panels/sample"] = self.sample
+        prefixed_data = {}
+        if add_prefix is not None:
+            for k, v in data.items():
+                prefixed_data[add_prefix + k] = v
+        else:
+            prefixed_data = data
+        wandb.log(prefixed_data)
 
 
     def __inter_epoch_validation(self, model: nn.Module, optimizer: Optimizer) -> bool:
@@ -331,7 +337,7 @@ class Trainer:
         for name, metric in self.__val_metrics.items():
             data["v_" + name] = metric.compute().item()
 
-        self.wandb_log(data)
+        self.wandb_log(data, "validation results/")
 
         if loss < self.best_validation_loss:
             from pthelpers.training.persist import save_training_state
@@ -363,4 +369,4 @@ class Trainer:
             if (model is None):
                 plot_samples(dl, self.n_classes, name)
             else:
-                plot_samples_with_predictions(self, dl, self.n_classes, name, model)
+                plot_samples_with_predictions(self, dl, self.n_classes, name, model, panel=f"{name} results")

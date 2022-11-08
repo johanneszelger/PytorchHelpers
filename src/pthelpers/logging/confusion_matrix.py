@@ -70,9 +70,8 @@ def confusion_matrix(
     }
     title = title or ""
 
-    # trainer.wandb_log({"table": wandb.Table(columns=["Step", "Actual", "Predicted", "nPredictions"], data=data)})
-    return wandb.log({f"{panel + '/' if panel is not None else ''}test": wandb.plot_table(
-        "stepped_conf_matrix",
+    return trainer.wandb_log({f"{panel + '/' if panel is not None else ''}test": wandb.plot_table(
+        "jz90/stepped_cm",
         wandb.Table(columns=["Step", "Actual", "Predicted", "nPredictions"], data=data),
         fields,
         {"title": title},
@@ -90,19 +89,19 @@ if __name__ == '__main__':
     t.epoch = 0
     t.sample = 0
     confusion_matrix(t, "cm", y_true=[0, 0, 1, 1, 2, 2], preds=[0,1,1,2,2,0],
-                                                              title="Val Conf. Mat.")
+                                                              title="Val Conf. Mat.", panel="test")
 
 
     t.batch = 2
     t.epoch = 1
     t.sample = 4
     confusion_matrix(t, "cm", y_true=[0, 0, 1, 1, 2, 2], preds=[0,1,0,2,2,0],
-                                                              title="Val Conf. Mat.")
+                                                              title="Val Conf. Mat.", panel="test")
 
     t.batch = 3
     t.epoch = 2
     t.sample = 6
     confusion_matrix(t, "cm", y_true=[0, 0, 1, 1, 2, 2], preds=[0,1,0,1,1,0],
-                                                              title="Val Conf. Mat.")
+                                                              title="Val Conf. Mat.", panel="test")
 
     wandb.finish()
