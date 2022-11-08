@@ -131,7 +131,7 @@ class Trainer:
 
         self.plot_class_dist()
         if self.config["plot_samples_training_start"]:
-            self.plot_data(self.train_dl, "training start", panel="data")
+            self.plot_data(self.train_dl, "training start")
 
         # prepare training
         self.__reset()
