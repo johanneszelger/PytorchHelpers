@@ -289,10 +289,9 @@ class Trainer:
             self.plot_data(self.train_dl, "training", model)
 
         if self.config["plot"] and self.config["plot_confusion_training_log"]:
-            self.wandb_log({"conf_mat": wandb.plot.confusion_matrix(probs=None,
-                                                                    y_true=self.collected_targets.numpy(),
-                                                                    preds=self.collected_outputs.numpy().argmax(axis=-1),
-                                                                    class_names=get_class_names(self.n_classes))})
+            from pthelpers.logging.confusion_matrix import confusion_matrix
+            confusion_matrix(self, "training_cm", self.collected_targets.numpy(), self.collected_outputs.numpy().argmax(axis=-1),
+                             get_class_names(self.n_classes), title="Training CM")
         self.collected_targets = Tensor([]).detach()
         self.collected_outputs = Tensor([]).detach()
 
@@ -342,9 +341,9 @@ class Trainer:
             self.plot_data(self.val_dl, "validation", model)
 
         if self.config["plot"] and self.config["plot_confusion_validation_log"]:
-            self.wandb_log({"v_conf_mat": wandb.plot.confusion_matrix(probs=None,
-                                                                    y_true=targets.numpy(), preds=outputs.numpy().argmax(axis=-1),
-                                                                    class_names=get_class_names(self.n_classes))})
+            from pthelpers.logging.confusion_matrix import confusion_matrix
+            confusion_matrix(self, "validation_cm", targets.numpy(), outputs.numpy().argmax(axis=-1),
+                             get_class_names(self.n_classes), title="Validation CM")
 
 
     def __unfreeze_model__(self, model: nn.Module):

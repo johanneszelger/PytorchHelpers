@@ -81,3 +81,9 @@ if __name__ == '__main__':
     t.epoch = 0
     t.sample = 0
     plot_samples_with_predictions(t, loader, 10, model=SimpleNet(), data_name="test2")
+
+
+    t.batch = 2
+    t.epoch = 1
+    t.sample = 4
+    plot_samples_with_predictions(t, loader, 10, model=SimpleNet(), data_name="test2")
