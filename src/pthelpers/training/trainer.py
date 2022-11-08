@@ -291,7 +291,7 @@ class Trainer:
         if self.config["plot"] and self.config["plot_confusion_training_log"]:
             from pthelpers.logging.confusion_matrix import confusion_matrix
             confusion_matrix(self, "training_cm", self.collected_targets.numpy(), self.collected_outputs.numpy().argmax(axis=-1),
-                             get_class_names(self.n_classes), title="Training CM")
+                             get_class_names(self.n_classes), title="Training CM", panel="training results")
         self.collected_targets = Tensor([]).detach()
         self.collected_outputs = Tensor([]).detach()
 
@@ -343,7 +343,7 @@ class Trainer:
         if self.config["plot"] and self.config["plot_confusion_validation_log"]:
             from pthelpers.logging.confusion_matrix import confusion_matrix
             confusion_matrix(self, "validation_cm", targets.numpy(), outputs.numpy().argmax(axis=-1),
-                             get_class_names(self.n_classes), title="Validation CM")
+                             get_class_names(self.n_classes), title="Validation CM", panel="validation results")
 
 
     def __unfreeze_model__(self, model: nn.Module):

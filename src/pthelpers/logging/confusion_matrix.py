@@ -22,6 +22,7 @@ def confusion_matrix(
     preds: Optional[Sequence] = None,
     class_names: Optional[Sequence[str]] = None,
     title: Optional[str] = None,
+    panel: str = None
 ):
 
     assert len(preds) == len(
@@ -70,7 +71,7 @@ def confusion_matrix(
     title = title or ""
 
     # trainer.wandb_log({"table": wandb.Table(columns=["Step", "Actual", "Predicted", "nPredictions"], data=data)})
-    return wandb.log({"test": wandb.plot_table(
+    return wandb.log({f"{panel + '/' if panel is not None else ''}test": wandb.plot_table(
         "stepped_conf_matrix",
         wandb.Table(columns=["Step", "Actual", "Predicted", "nPredictions"], data=data),
         fields,
