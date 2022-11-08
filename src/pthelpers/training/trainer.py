@@ -278,7 +278,10 @@ class Trainer:
         data = {"t_loss": self.__logging_infos["running_loss"] / batches_since_last_log, "lr": optimizer.param_groups[0]['lr']}
 
         for name, metric in self.metrics.items():
-            data[name] = metric.compute().item()
+            if hasattr(metric, "panel"):
+                data[metric.panel + "/" + name] = metric.compute().item()
+            else:
+                data[name] = metric.compute().item()
             metric.reset()
 
         self.wandb_log(data, "training results/")
@@ -300,7 +303,10 @@ class Trainer:
         prefixed_data = {}
         if add_prefix is not None:
             for k, v in data.items():
-                prefixed_data[add_prefix + k] = v
+                if "/" not in k:
+                    prefixed_data[add_prefix + k] = v
+                else:
+                    prefixed_data[k] = v
         else:
             prefixed_data = data
 
@@ -337,7 +343,10 @@ class Trainer:
 
         data = {"v_loss": loss}
         for name, metric in self.__val_metrics.items():
-            data["v_" + name] = metric.compute().item()
+            if hasattr(metric, "panel"):
+                data[metric.panel + "/v_" + name] = metric.compute().item()
+            else:
+                data["v_" + name] = metric.compute().item()
 
         self.wandb_log(data, "validation results/")
 
