@@ -143,6 +143,8 @@ class Trainer:
 
         # train for x epochs
         for self.epoch in range(start_epoch, epochs + 1):
+            if self.train_dl is not None and hasattr(self.train_dl, "set_epoch"):
+                self.train_dl.set_epoch(self.epoch)
             resume = self.__train_epoch(model, optimizer)
             if scheduler is not None:
                 scheduler.step()
