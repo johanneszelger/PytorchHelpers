@@ -314,11 +314,11 @@ class Trainer:
         else:
             prefixed_data = data
 
-        prefixed_data["Hidden Panels/epoch"] = self.batch / len(self.train_dl)
+        prefixed_data["Hidden Panels/epoch"] = float(self.batch) / len(self.train_dl)
         prefixed_data["Hidden Panels/batch"] = self.batch
         prefixed_data["Hidden Panels/sample"] = self.sample
 
-        wandb.log(prefixed_data)
+        wandb.log(prefixed_data, step=self.batch)
 
 
     def __inter_epoch_validation(self, model: nn.Module, optimizer: Optimizer) -> bool:
