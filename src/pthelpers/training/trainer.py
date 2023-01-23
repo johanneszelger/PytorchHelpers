@@ -18,7 +18,7 @@ from pthelpers.utils.reproducibility import get_seed
 
 def should_use_cuda(no_cuda):
     """
-    Determins wether cuda should be used
+    Determines whether cuda should be used
     :param no_cuda: flag to force result to be False
     :return: if cuda should be used
     """

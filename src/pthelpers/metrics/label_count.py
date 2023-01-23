@@ -2,9 +2,6 @@ import torch
 from torch import Tensor
 from torchmetrics import Metric, Accuracy
 
-Accuracy()
-
-
 class LabelCount(Metric):
     full_state_update: bool = False
 
