@@ -8,7 +8,7 @@ import wandb
 from torch import nn, Tensor
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Sampler
 from tqdm import tqdm
 
 from pthelpers.plotting.class_dist import plot_class_dist
@@ -38,7 +38,8 @@ class Trainer:
     def __init__(self, train_dl: DataLoader, val_dl: DataLoader, n_classes: int, test_dl: DataLoader = None,
                  loss_fn: nn.Module = None,
                  no_cuda: bool = False,
-                 metrics: dict = None) -> None:
+                 metrics: dict = None,
+                 sampler: Sampler = None) -> None:
         """
         :param train_dl: train data
         :param val_dl: validation data
@@ -51,6 +52,7 @@ class Trainer:
         self.train_dl = train_dl
         self.val_dl = val_dl
         self.test_dl = test_dl
+        self.sampler = sampler
         self.n_classes = n_classes
         self.metrics = metrics if metrics is not None else {}
         self.__val_metrics = copy.deepcopy(self.metrics)
@@ -143,8 +145,8 @@ class Trainer:
 
         # train for x epochs
         for self.epoch in range(start_epoch, epochs + 1):
-            if self.train_dl is not None and hasattr(self.train_dl, "set_epoch"):
-                self.train_dl.set_epoch(self.epoch)
+            if self.sampler:
+                self.sampler.set_epoch(self.epoch)
             resume = self.__train_epoch(model, optimizer)
             if scheduler is not None:
                 scheduler.step()
