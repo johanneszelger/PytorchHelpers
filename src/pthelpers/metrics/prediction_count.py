@@ -2,8 +2,6 @@ import torch
 from torch import Tensor
 from torchmetrics import Metric, Accuracy
 
-Accuracy()
-
 
 class PredictionCount(Metric):
     full_state_update: bool = False
