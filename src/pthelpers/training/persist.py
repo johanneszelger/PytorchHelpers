@@ -29,7 +29,10 @@ def load_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer
     :param optimizer: optimizer params to load
     :return: None
     """
-    checkpoint = torch.load(osp.join(generate_run_path(), name))
+    path = osp.join(generate_run_path(), name)
+    print(f'\nLoading checkpoint: {path}\n')
+    checkpoint = torch.load(path)
+
     trainer.epoch = checkpoint['epoch']
     trainer.batch = checkpoint['batch']
     trainer.sample = checkpoint['sample']
@@ -41,6 +44,8 @@ def load_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer
         model[0].load_state_dict({k[2:]: v for (k,v) in checkpoint['state_dict'].items()})
     else:
         model.load_state_dict(checkpoint['state_dict'])
+
+    print(f'\nFinished loading checkpoint: {path}\n')
 
 
 def save_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer, name: str= None) -> None:
