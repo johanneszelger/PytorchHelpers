@@ -22,13 +22,7 @@ def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training"):
     g = torch.Generator()
     g.manual_seed(42)
     for i in range(n_classes):
-        weights = np.zeros(n_classes)
-        if dataset.targets.ndim == 1 or dataset.targets.shape[1] == 1:
-            weights[i] = 1
-            sample_weights = [weights[j] for j in dataset.targets]
-        else:
-            weights[i] = dataset.targets[:, i].sum()
-            sample_weights = weights
+        sample_weights = determine_weights(dataset, i, n_classes)
         sampler = WeightedRandomSampler(sample_weights, 10000, generator=g)
         loader = DataLoader(dataset, batch_size=n_cols, sampler=sampler)
 
@@ -38,6 +32,16 @@ def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training"):
             break
 
     wandb.log({f"data/sample {data_name} images": tbl})
+
+
+def determine_weights(dataset, class_idx, n_classes):
+    weights = np.zeros(n_classes)
+    if dataset.targets.ndim == 1 or dataset.targets.shape[1] == 1:
+        weights[class_idx] = 1
+        return [weights[j] for j in dataset.targets]
+    else:
+        weights[class_idx] = dataset.targets[:, class_idx].sum()
+        return weights
 
 
 def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: int, data_name: str, model: nn.Module, batch_size=32,
@@ -53,9 +57,7 @@ def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: i
         g = torch.Generator()
         g.manual_seed(42)
         for i in range(n_classes):
-            weights = np.zeros(n_classes)
-            weights[i] = 1
-            sample_weights = [weights[i] for i in dataset.targets]
+            sample_weights =  determine_weights(dataset, i, n_classes)
             sampler = WeightedRandomSampler(sample_weights, 10000, generator=g)
             loader = DataLoader(dataset, batch_size=min(batch_size, n_samples), sampler=sampler)
 
