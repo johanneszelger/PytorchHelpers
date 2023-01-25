@@ -27,7 +27,7 @@ def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training"):
             weights[i] = 1
             sample_weights = [weights[j] for j in dataset.targets]
         else:
-            weights = weights[i] = dataset.targets[:, i].sum()
+            weights[i] = dataset.targets[:, i].sum()
         sampler = WeightedRandomSampler(sample_weights, 10000, generator=g)
         loader = DataLoader(dataset, batch_size=n_cols, sampler=sampler)
 
