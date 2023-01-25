@@ -23,8 +23,8 @@ class AUC(Metric):
             preds: Predictions from model (logits, probabilities, or labels)
             target: Ground truth labels
         """
-        self.target.append(target[:, self.label_value])
-        self.preds.append(preds[:, self.label_value])
+        self.target.append(target[:, self.label_value].cpu())
+        self.preds.append(preds[:, self.label_value].cpu())
 
 
     def compute(self) -> Tensor:
