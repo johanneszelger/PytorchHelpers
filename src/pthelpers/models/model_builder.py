@@ -155,7 +155,7 @@ class ModelBuilder():
         num_classes = model_params["num_classes"] if "num_classes" in model_params else 1000
         frozen = model_params["frozen"] if "frozen" in model_params else False
 
-        resnet = resnet50(weights=ResNet50_Weights[weights] if weights else None,
+        resnet = constructor(weights=ResNet50_Weights[weights] if weights else None,
                           num_classes=1000 if weights else num_classes)
 
         if weights and num_classes != 1000:
