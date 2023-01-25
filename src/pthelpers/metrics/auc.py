@@ -26,7 +26,8 @@ class AUC(Metric):
         self.targets=torch.cat([self.targets, target[:, self.label_value].cpu()])
         self.preds=torch.cat([self.preds, preds[:, self.label_value].cpu()])
 
-
+    def to(self):
+        pass
     def compute(self) -> Tensor:
         """Computes accuracy based on inputs passed in to ``update`` previously."""
         try:
