@@ -29,8 +29,10 @@ class AUC(Metric):
 
     def compute(self) -> Tensor:
         """Computes accuracy based on inputs passed in to ``update`` previously."""
-        return roc_auc_score(self.targets, self.preds)
-
+        try:
+            return roc_auc_score(self.targets, self.preds)
+        except:
+            return 0
 
 if __name__ == '__main__':
     from torchmetrics.utilities import check_forward_full_state_property
