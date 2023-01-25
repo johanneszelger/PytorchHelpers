@@ -23,8 +23,11 @@ def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training"):
     g.manual_seed(42)
     for i in range(n_classes):
         weights = np.zeros(n_classes)
-        weights[i] = 1
-        sample_weights = [weights[i] for i in dataset.targets]
+        if dataset.targets.ndim == 1 or dataset.targets.shape[1] == 1:
+            weights[i] = 1
+            sample_weights = [weights[j] for j in dataset.targets]
+        else:
+            weights = weights[i] = dataset.targets[:, i].sum()
         sampler = WeightedRandomSampler(sample_weights, 10000, generator=g)
         loader = DataLoader(dataset, batch_size=n_cols, sampler=sampler)
 
