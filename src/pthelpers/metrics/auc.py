@@ -23,8 +23,8 @@ class AUC(Metric):
             preds: Predictions from model (logits, probabilities, or labels)
             target: Ground truth labels
         """
-        self.targets.append(target[:, self.label_value].cpu())
-        self.preds.append(preds[:, self.label_value].cpu())
+        self.targets=torch.cat([self.targets, target[:, self.label_value].cpu()])
+        self.preds=torch.cat([self.preds, preds[:, self.label_value].cpu()])
 
 
     def compute(self) -> Tensor:
