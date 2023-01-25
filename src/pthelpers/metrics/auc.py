@@ -3,7 +3,7 @@ from sklearn.metrics import roc_auc_score
 from torch import Tensor
 from torchmetrics import Metric, Accuracy
 
-class LabelCount(Metric):
+class AUC(Metric):
     full_state_update: bool = False
 
 
