@@ -275,10 +275,11 @@ class Trainer:
                 "lr": optimizer.param_groups[0]['lr']}
 
         for name, metric in self.metrics.items():
-            if hasattr(metric, "panel"):
-                data[metric.panel + "/" + name] = metric.compute().item()
+            res = metric.compute()
+            if res.ndim == 1 and len(res) == 1:
+                data["v_" + name] = res.item()
             else:
-                data[name] = metric.compute().item()
+                data["v_" + name] = res
             metric.reset()
 
         self.wandb_log(data, "training results/")
@@ -342,6 +343,7 @@ class Trainer:
                 data["v_" + name] = res.item()
             else:
                 data["v_" + name] = res
+            metric.reset()
 
         self.wandb_log(data, "validation results/")
 
