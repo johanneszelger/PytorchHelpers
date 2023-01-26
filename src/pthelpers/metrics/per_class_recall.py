@@ -6,7 +6,7 @@ from torchmetrics.classification import BinaryAccuracy, BinaryRecall
 
 class PerClassRecall(Metric):
     full_state_update: bool = False
-    def __init__(self, label_value: int):
+    def __init__(self):
         super().__init__()
         self.acc = BinaryRecall(multidim_average='samplewise')
 

@@ -6,7 +6,7 @@ from torchmetrics.classification import BinaryAccuracy, BinaryPrecision
 
 class PerClassPrec(Metric):
     full_state_update: bool = False
-    def __init__(self, label_value: int):
+    def __init__(self):
         super().__init__()
         self.acc = BinaryPrecision(multidim_average='samplewise')
 
