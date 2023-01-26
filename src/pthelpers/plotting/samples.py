@@ -12,7 +12,7 @@ from pthelpers.training import Trainer
 from pthelpers.utils.class_names import get_class_names
 
 
-def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training"):
+def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training", panel: str = None):
     dataset = dl.dataset
     n_cols = wandb.config["samples_per_row"] if "samples_per_row" in wandb.config else 5
     tbl = wandb.Table(columns=["cls"] + ["sample_" + str(i + 1) for i in range(n_cols)])
@@ -31,7 +31,7 @@ def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training"):
             tbl.add_data(cls_names[i], *[wandb.Image(img) for img in imgs])
             break
 
-    wandb.log({f"data_plots/sample {data_name} images": tbl})
+    wandb.log({f"{panel if panel is not None else 'data_plots'}/sample {data_name} images": tbl})
 
 
 def determine_weights(dataset, class_idx, n_classes):
@@ -70,7 +70,7 @@ def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: i
                 if n_samples - (j + 1) * batch_size <= 0:
                     break
 
-    trainer.wandb_log({f"{panel + '/' if panel is not None else ''}{data_name} predictions": tbl})
+    trainer.wandb_log({f"{panel if panel is not None else 'prediction_plots'}/{data_name} predictions": tbl})
     model.train()
 
 

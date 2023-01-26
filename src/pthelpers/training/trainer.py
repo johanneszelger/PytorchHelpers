@@ -382,6 +382,6 @@ class Trainer:
         from pthelpers.plotting.samples import plot_samples, plot_samples_with_predictions
         if self.config["plot"]:
             if (model is None):
-                plot_samples(dl, self.n_classes, name)
+                plot_samples(dl, self.n_classes, name, panel=f"{name} label plots")
             else:
                 plot_samples_with_predictions(self, dl, self.n_classes, name, model, panel=f"{name} prediction plots")
