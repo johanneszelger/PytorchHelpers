@@ -288,10 +288,14 @@ class Trainer:
             self.plot_data(self.train_dl, "training", model)
 
         if self.config["plot"] and self.config["plot_confusion_training_log"]:
-            from pthelpers.logging.confusion_matrix import confusion_matrix
-            confusion_matrix(self, "training_cm", self.collected_targets.numpy(),
-                             self.collected_outputs.numpy().argmax(axis=-1),
-                             get_class_names(self.n_classes), title="Training CM", panel="training results")
+            # from pthelpers.logging.confusion_matrix import confusion_matrix
+            # confusion_matrix(self, "training_cm", self.collected_targets.numpy(),
+            #                  self.collected_outputs.numpy().argmax(axis=-1),
+            #                  get_class_names(self.n_classes), title="Training CM", panel="training results")
+            wandb.log({"training_cm" : wandb.plot.confusion_matrix(probs=None,
+                                                            y_true=self.collected_targets.numpy(), preds= self.collected_outputs.numpy().argmax(axis=-1),
+                                                            class_names=get_class_names(self.n_classes))})
+
         self.collected_targets = Tensor([]).detach()
         self.collected_outputs = Tensor([]).detach()
 
