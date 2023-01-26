@@ -276,7 +276,7 @@ class Trainer:
 
         for name, metric in self.metrics.items():
             res = metric.compute()
-            if res.ndim == 1 and len(res) == 1:
+            if res.ndim == 0:
                 data["v_" + name] = res.item()
             else:
                 data["v_" + name] = res
@@ -339,7 +339,7 @@ class Trainer:
         data = {"v_loss": loss}
         for name, metric in self.__val_metrics.items():
             res = metric.compute()
-            if res.ndim == 1 and len(res) == 1:
+            if res.ndim == 0:
                 data["v_" + name] = res.item()
             else:
                 data["v_" + name] = res
