@@ -71,7 +71,7 @@ def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: i
                 preds = model(imgs).cpu()
                 classification = preds.numpy().argmax(axis=1)
                 [tbl.add_data(wandb.Image(imgs[i]), cls_names[targets[i].argmax()],
-                              cls_names[classification[i] + f"({preds[classification[i]]:.2f})"]) for i in range(len(imgs))]
+                              cls_names[classification[i] + f"({preds[i, classification[i]]:.2f})"]) for i in range(len(imgs))]
                 if n_samples - (j + 1) * batch_size <= 0:
                     break
 
