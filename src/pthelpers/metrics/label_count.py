@@ -10,7 +10,6 @@ class LabelCount(Metric):
         super().__init__()
         self.label_value = label_value
         self.add_state("count", default=torch.zeros(1), dist_reduce_fx='sum')
-        self.panel = "data"
 
 
     def update(self, preds: Tensor, target: Tensor) -> None:  # type: ignore

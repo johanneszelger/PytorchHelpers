@@ -1,16 +1,14 @@
 import torch
 from torch import Tensor
 from torchmetrics import Metric, Accuracy
+from torchmetrics.classification import BinaryAccuracy, BinaryPrecision
 
 
-class PredictionCount(Metric):
+class PerClassPrec(Metric):
     full_state_update: bool = False
-
-
     def __init__(self, label_value: int):
         super().__init__()
-        self.label_value = label_value
-        self.add_state("count", default=torch.zeros(1), dist_reduce_fx='sum')
+        self.acc = BinaryPrecision(multidim_average='samplewise')
 
 
     def update(self, preds: Tensor, target: Tensor) -> None:  # type: ignore
@@ -21,18 +19,13 @@ class PredictionCount(Metric):
             preds: Predictions from model (logits, probabilities, or labels)
             target: Ground truth labels
         """
-        if preds.ndim == 1:
-            self.count += (preds == self.label_value).sum()
-        else:
-            self.count += (preds.argmax(axis=1) == self.label_value).sum()
+        self.acc.update(preds.t(), target.t())
 
 
     def compute(self) -> Tensor:
         """Computes accuracy based on inputs passed in to ``update`` previously."""
-        return self.count
+        return self.acc.compute()
 
+    def reset(self) -> None:
+        self.acc.reset()
 
-if __name__ == '__main__':
-    from torchmetrics.utilities import check_forward_full_state_property
-
-    check_forward_full_state_property(PredictionCount, {"label_value": 0}, {"preds": [], "target": torch.tensor([0, 0, 1, 1, 0])})

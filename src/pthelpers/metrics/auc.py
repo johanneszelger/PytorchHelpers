@@ -12,7 +12,6 @@ class AUC(Metric):
         self.label_value = label_value
         self.add_state("targets", default=torch.Tensor(), dist_reduce_fx='mean')
         self.add_state("preds", default=torch.Tensor(), dist_reduce_fx='mean')
-        self.panel = "data"
 
 
     def update(self, preds: Tensor, target: Tensor) -> None:  # type: ignore

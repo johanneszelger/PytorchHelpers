@@ -1,5 +1,4 @@
 import copy
-import logging
 from typing import Union, Tuple
 
 import torch
@@ -33,7 +32,6 @@ class Trainer:
     """
     Helper class that enables easy training, etc for pytorch. Logging to w&b
     """
-
 
     def __init__(self, train_dl: DataLoader, val_dl: DataLoader, n_classes: int, test_dl: DataLoader = None,
                  loss_fn: nn.Module = None,
@@ -99,7 +97,6 @@ class Trainer:
         if "plot_confusion_validation_log" not in self.config:
             self.config["plot_confusion_validation_log"] = True
 
-
     def __reset(self):
         self.epoch = 0
         self.batch = 0
@@ -107,7 +104,6 @@ class Trainer:
 
         self.collected_targets = Tensor([]).detach()
         self.collected_outputs = Tensor([]).detach()
-
 
     def __to(self, device, model):
         model.to(device)
@@ -117,7 +113,6 @@ class Trainer:
             metric.to(device)
         for metric in self.__val_metrics.values():
             metric.to(device)
-
 
     def train(self, model: nn.Module, optimizer: Optimizer, epochs: int, scheduler: _LRScheduler = None) -> None:
         """
@@ -160,7 +155,6 @@ class Trainer:
 
         from pthelpers.training.persist import clean_checkpoints
         clean_checkpoints()
-
 
     def __train_epoch(self, model: nn.Module, optimizer: Optimizer):
         if self.config["unfreeze_after"] is not None and self.epoch == self.config["unfreeze_after"]:
@@ -212,8 +206,8 @@ class Trainer:
 
         return True
 
-
-    def test(self, model: nn.Module, test_loader: DataLoader, metrics: Union[dict, None] = None) -> Tuple[int, Tensor, Tensor]:
+    def test(self, model: nn.Module, test_loader: DataLoader, metrics: Union[dict, None] = None) -> Tuple[
+        int, Tensor, Tensor]:
         """
         Tests a model
         :param model: model to test
@@ -237,7 +231,8 @@ class Trainer:
             for samples in test_loader:
                 data = samples[0]
                 target = samples[1]
-                targets = torch.cat((targets, target)) if target.ndim == 1 else torch.cat((targets, target.argmax(axis=-1)))
+                targets = torch.cat((targets, target)) if target.ndim == 1 else torch.cat(
+                    (targets, target.argmax(axis=-1)))
                 paths = (samples + [None])[2]
 
                 data, target = data.to(self.device), target.to(self.device)
@@ -253,7 +248,6 @@ class Trainer:
         model.train()
         return test_loss, targets, outputs
 
-
     def __inter_epoch_training_log(self, optimzer: Optimizer, model: nn.Module) -> bool:
         if self.config["log_interval_batches"] is not None \
                 and self.batch % self.config["log_interval_batches"] == 0:
@@ -261,13 +255,11 @@ class Trainer:
             return True
         return False
 
-
     def __epoch_end_training_log(self, optimzer: Optimizer, model: nn.Module) -> bool:
         if self.config["log_interval_batches"] is None:
             self.__training_log(optimzer, model)
             return True
         return False
-
 
     def __training_log(self, optimizer: Optimizer, model: nn.Module) -> None:
         batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch - 1))
@@ -275,11 +267,12 @@ class Trainer:
             else len(self.train_dl)
         if self.config["print_logs"]:
             print('\nTrain Epoch: {} [{}/{} ({:.0f}%)]\tAvg loss: {:.6f}\n'.format(
-                    self.epoch, batch_in_epoch, len(self.train_dl),
-                    100. * batch_in_epoch / len(self.train_dl),
-                    self.__logging_infos["running_loss"] / batches_since_last_log))
+                self.epoch, batch_in_epoch, len(self.train_dl),
+                100. * batch_in_epoch / len(self.train_dl),
+                self.__logging_infos["running_loss"] / batches_since_last_log))
 
-        data = {"t_loss": self.__logging_infos["running_loss"] / batches_since_last_log, "lr": optimizer.param_groups[0]['lr']}
+        data = {"t_loss": self.__logging_infos["running_loss"] / batches_since_last_log,
+                "lr": optimizer.param_groups[0]['lr']}
 
         for name, metric in self.metrics.items():
             if hasattr(metric, "panel"):
@@ -297,11 +290,11 @@ class Trainer:
 
         if self.config["plot"] and self.config["plot_confusion_training_log"]:
             from pthelpers.logging.confusion_matrix import confusion_matrix
-            confusion_matrix(self, "training_cm", self.collected_targets.numpy(), self.collected_outputs.numpy().argmax(axis=-1),
+            confusion_matrix(self, "training_cm", self.collected_targets.numpy(),
+                             self.collected_outputs.numpy().argmax(axis=-1),
                              get_class_names(self.n_classes), title="Training CM", panel="training results")
         self.collected_targets = Tensor([]).detach()
         self.collected_outputs = Tensor([]).detach()
-
 
     def wandb_log(self, data: dict, add_prefix: str = None):
         prefixed_data = {}
@@ -320,7 +313,6 @@ class Trainer:
 
         wandb.log(prefixed_data, step=self.batch)
 
-
     def __inter_epoch_validation(self, model: nn.Module, optimizer: Optimizer) -> bool:
         if self.config["val_interval_batches"] is not None \
                 and self.batch % self.config["val_interval_batches"] == 0:
@@ -328,13 +320,11 @@ class Trainer:
             return True
         return False
 
-
     def __epoch_end_validation(self, model: nn.Module, optimizer: Optimizer) -> bool:
         if self.config["val_interval_batches"] is None:
             self.__validate(model, optimizer)
             return True
         return False
-
 
     def __validate(self, model: nn.Module, optimizer: Optimizer) -> None:
         loss, targets, outputs = self.test(model, self.val_dl, self.__val_metrics)
@@ -342,15 +332,16 @@ class Trainer:
         batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch - 1))
         if self.config["print_logs"]:
             print('\nValidation Epoch: {} [{}/{} ({:.0f}%)]\tAvg loss: {:.6f}\n'.format(
-                    self.epoch, batch_in_epoch, len(self.train_dl),
-                    100. * batch_in_epoch / len(self.train_dl), loss))
+                self.epoch, batch_in_epoch, len(self.train_dl),
+                100. * batch_in_epoch / len(self.train_dl), loss))
 
         data = {"v_loss": loss}
         for name, metric in self.__val_metrics.items():
-            if hasattr(metric, "panel"):
-                data[metric.panel + "/v_" + name] = metric.compute().item()
+            res = metric.compute()
+            if res.ndim == 1 and len(res) == 1:
+                data["v_" + name] = res.item()
             else:
-                data["v_" + name] = metric.compute().item()
+                data["v_" + name] = res
 
         self.wandb_log(data, "validation results/")
 
@@ -366,17 +357,14 @@ class Trainer:
             confusion_matrix(self, "validation_cm", targets.numpy(), outputs.numpy().argmax(axis=-1),
                              get_class_names(self.n_classes), title="Validation CM", panel="validation results")
 
-
     def __unfreeze_model__(self, model: nn.Module):
         for param in model.parameters():
             param.requires_grad = True
-
 
     def plot_class_dist(self):
         if self.config["plot"] and self.config["plot_class_dist"]:
             print("plotting class dist, depending on dataset this might take some time")
             plot_class_dist(self.train_dl, self.n_classes)
-
 
     def plot_data(self, dl: DataLoader, name: str, model: nn.Module = None):
         from pthelpers.plotting.samples import plot_samples, plot_samples_with_predictions
