@@ -6,8 +6,9 @@ from torchmetrics.classification import BinaryAccuracy, BinaryRecall
 
 class PerClassRecall(Metric):
     full_state_update: bool = False
-    def __init__(self):
+    def __init__(self, class_idx):
         super().__init__()
+        self.class_idx = class_idx
         self.acc = BinaryRecall(multidim_average='samplewise')
 
 
@@ -19,7 +20,7 @@ class PerClassRecall(Metric):
             preds: Predictions from model (logits, probabilities, or labels)
             target: Ground truth labels
         """
-        self.acc.update(preds.t(), target.t())
+        self.acc.update(preds[:, self.class_idx].t(), target[:, self.class_idx].t())
 
 
     def compute(self) -> Tensor:

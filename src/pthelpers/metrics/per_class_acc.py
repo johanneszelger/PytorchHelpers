@@ -6,9 +6,10 @@ from torchmetrics.classification import BinaryAccuracy
 
 class PerClassAcc(Metric):
     full_state_update: bool = False
-    def __init__(self):
+    def __init__(self, class_idx):
         super().__init__()
-        self.acc = BinaryAccuracy(multidim_average='samplewise')
+        self.class_idx = class_idx
+        self.acc = BinaryAccuracy(multidim_average='global')
 
 
     def update(self, preds: Tensor, target: Tensor) -> None:  # type: ignore
@@ -19,7 +20,7 @@ class PerClassAcc(Metric):
             preds: Predictions from model (logits, probabilities, or labels)
             target: Ground truth labels
         """
-        self.acc.update(preds.t(), target.t())
+        self.acc.update(preds[:, self.class_idx].t(), target[:, self.class_idx].t())
 
 
     def compute(self) -> Tensor:

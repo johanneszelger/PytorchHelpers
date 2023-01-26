@@ -277,10 +277,7 @@ class Trainer:
 
         for name, metric in self.metrics.items():
             res = metric.compute()
-            if res.ndim == 0:
-                data["v_" + name] = res.item()
-            else:
-                data["v_" + name] = res
+            data[name] = res.item()
             metric.reset()
 
         self.wandb_log(data, "training results/")
@@ -342,10 +339,7 @@ class Trainer:
         data = {"v_loss": loss}
         for name, metric in self.__val_metrics.items():
             res = metric.compute()
-            if res.ndim == 0:
-                data["v_" + name] = res.item()
-            else:
-                data["v_" + name] = res
+            data["v_" + name] = res.item()
             metric.reset()
 
         self.wandb_log(data, "validation results/")
