@@ -25,8 +25,8 @@ class PerClassAcc(Metric):
 
     def compute(self) -> Tensor:
         """Computes accuracy based on inputs passed in to ``update`` previously."""
-        return self.prec.compute()
+        return self.acc.compute()
 
     def reset(self) -> None:
-        self.prec.reset()
+        self.acc.reset()
 
