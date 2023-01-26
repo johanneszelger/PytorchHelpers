@@ -1,4 +1,6 @@
 import copy
+import logging
+import time
 from typing import Union, Tuple
 
 import torch
@@ -328,7 +330,9 @@ class Trainer:
         return False
 
     def __validate(self, model: nn.Module, optimizer: Optimizer) -> None:
+        start = time.time()
         loss, targets, outputs = self.test(model, self.val_dl, self.__val_metrics)
+        logging.debug(f"validation testing took {time.time() - start}")
 
         batch_in_epoch = self.batch - (len(self.train_dl) * (self.epoch - 1))
         if self.config["print_logs"]:
