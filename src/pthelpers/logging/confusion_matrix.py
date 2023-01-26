@@ -20,8 +20,7 @@ def confusion_matrix(
     y_true: Optional[Sequence] = None,
     preds: Optional[Sequence] = None,
     class_names: Optional[Sequence[str]] = None,
-    title: Optional[str] = None,
-    panel: str = None
+    title: Optional[str] = None
 ):
 
     assert len(preds) == len(
@@ -61,8 +60,8 @@ def confusion_matrix(
         for j in range(n_classes):
             data.append([class_names[i], class_names[j], counts[i, j]])
 
-    return trainer.wandb_log({f"{panel + '/' if panel is not None else ''}test": wandb.plot_table(
-        "jz90/stepped_cm",
+    return trainer.wandb_log({f"{confusion_matrix}/{table_name}": wandb.plot_table(
+        "wandb/multi-run_confusion_matrix/v2",
         wandb.Table(columns=["Actual", "Predicted", "nPredictions"], data=data),
         fields,
         {"title": title},
