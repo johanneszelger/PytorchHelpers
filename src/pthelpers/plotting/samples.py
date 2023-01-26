@@ -40,13 +40,10 @@ def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training", pa
 
 
 def determine_weights(dataset, class_idx, n_classes):
-    weights = np.zeros(n_classes)
     if dataset.targets.ndim == 1 or dataset.targets.shape[1] == 1:
-        weights[class_idx] = 1
-        return [weights[j] for j in dataset.targets]
+        return np.asarray(dataset.targets == class_idx).astype(int)
     else:
-        weights[class_idx] = dataset.targets[:, class_idx].sum()
-        return weights
+        return dataset.targets[:, class_idx]
 
 
 def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: int, data_name: str, model: nn.Module, batch_size=32,
