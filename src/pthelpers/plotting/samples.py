@@ -31,7 +31,7 @@ def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training"):
             tbl.add_data(cls_names[i], *[wandb.Image(img) for img in imgs])
             break
 
-    wandb.log({f"data/sample {data_name} images": tbl})
+    wandb.log({f"data_plots/sample {data_name} images": tbl})
 
 
 def determine_weights(dataset, class_idx, n_classes):
@@ -49,7 +49,7 @@ def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: i
     model.eval()
     with torch.no_grad():
         dataset = dl.dataset
-        n_samples = wandb.config["pred_plot_samples_per_class"] if "pred_plot_samples_per_class" in wandb.config else 50
+        n_samples = wandb.config["pred_plot_samples_per_class"] if "pred_plot_samples_per_class" in wandb.config else 10
         tbl = wandb.Table(columns=["image", "label", "pred"])
 
         cls_names = get_class_names(n_classes)

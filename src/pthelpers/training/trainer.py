@@ -384,4 +384,4 @@ class Trainer:
             if (model is None):
                 plot_samples(dl, self.n_classes, name)
             else:
-                plot_samples_with_predictions(self, dl, self.n_classes, name, model, panel=f"{name} results")
+                plot_samples_with_predictions(self, dl, self.n_classes, name, model, panel=f"{name} prediction plots")
