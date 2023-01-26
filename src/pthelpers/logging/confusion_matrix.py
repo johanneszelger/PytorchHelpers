@@ -61,7 +61,7 @@ def confusion_matrix(
             data.append([class_names[i], class_names[j], counts[i, j]])
 
     return trainer.wandb_log({f"confusion_matrices/{table_name}": wandb.plot_table(
-        "wandb/multi-run_confusion_matrix/v2",
+        "wandb/confusion_matrix/v1",
         wandb.Table(columns=["Actual", "Predicted", "nPredictions"], data=data),
         fields,
         {"title": title},
