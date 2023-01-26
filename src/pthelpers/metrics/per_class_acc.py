@@ -20,13 +20,13 @@ class PerClassAcc(Metric):
             preds: Predictions from model (logits, probabilities, or labels)
             target: Ground truth labels
         """
-        self.acc.update(preds[:, self.class_idx].t(), target[:, self.class_idx].t())
+        self.acc.update(preds[:, self.class_idx], target[:, self.class_idx])
 
 
     def compute(self) -> Tensor:
         """Computes accuracy based on inputs passed in to ``update`` previously."""
-        return self.acc.compute()
+        return self.prec.compute()
 
     def reset(self) -> None:
-        self.acc.reset()
+        self.prec.reset()
 

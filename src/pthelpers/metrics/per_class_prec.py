@@ -9,7 +9,7 @@ class PerClassPrec(Metric):
     def __init__(self, class_idx):
         super().__init__()
         self.class_idx = class_idx
-        self.acc = BinaryPrecision(multidim_average='samplewise')
+        self.prec = BinaryPrecision(multidim_average='global')
 
 
     def update(self, preds: Tensor, target: Tensor) -> None:  # type: ignore
@@ -20,13 +20,13 @@ class PerClassPrec(Metric):
             preds: Predictions from model (logits, probabilities, or labels)
             target: Ground truth labels
         """
-        self.acc.update(preds[:, self.class_idx].t(), target[:, self.class_idx].t())
+        self.prec.update(preds[:, self.class_idx], target[:, self.class_idx])
 
 
     def compute(self) -> Tensor:
         """Computes accuracy based on inputs passed in to ``update`` previously."""
-        return self.acc.compute()
+        return self.prec.compute()
 
     def reset(self) -> None:
-        self.acc.reset()
+        self.prec.reset()
 
