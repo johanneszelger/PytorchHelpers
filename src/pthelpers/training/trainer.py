@@ -227,7 +227,6 @@ class Trainer:
         test_loss = 0
 
         with torch.no_grad():
-
             targets = Tensor([])
             outputs = Tensor([])
             for samples in test_loader:
