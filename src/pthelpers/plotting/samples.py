@@ -27,7 +27,7 @@ def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training", pa
     g.manual_seed(42)
     for i in range(n_classes):
         sample_weights = determine_weights(dataset, i, n_classes)
-        sampler = WeightedRandomSampler(sample_weights, 10000, generator=g)
+        sampler = WeightedRandomSampler(sample_weights, n_cols, generator=g)
         loader = DataLoader(dataset, batch_size=n_cols, sampler=sampler)
 
         for data in loader:
@@ -64,7 +64,7 @@ def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: i
         g.manual_seed(42)
         for i in range(n_classes):
             sample_weights =  determine_weights(dataset, i, n_classes)
-            sampler = WeightedRandomSampler(sample_weights, 10000, generator=g)
+            sampler = WeightedRandomSampler(sample_weights, min(batch_size, n_samples), generator=g)
             loader = DataLoader(dataset, batch_size=min(batch_size, n_samples), sampler=sampler)
 
             for j, data in enumerate(loader):
