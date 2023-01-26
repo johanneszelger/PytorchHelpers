@@ -1,3 +1,6 @@
+import logging
+import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -13,6 +16,7 @@ from pthelpers.utils.class_names import get_class_names
 
 
 def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training", panel: str = None):
+    start = time.time()
     dataset = dl.dataset
     n_cols = wandb.config["samples_per_row"] if "samples_per_row" in wandb.config else 5
     tbl = wandb.Table(columns=["cls"] + ["sample_" + str(i + 1) for i in range(n_cols)])
@@ -32,6 +36,7 @@ def plot_samples(dl: DataLoader, n_classes: int, data_name: str = "training", pa
             break
 
     wandb.log({f"{panel if panel is not None else 'data_plots'}/sample {data_name} images": tbl})
+    logging.debug(f"sample plotting took: {time.time()-start}")
 
 
 def determine_weights(dataset, class_idx, n_classes):
@@ -46,6 +51,7 @@ def determine_weights(dataset, class_idx, n_classes):
 
 def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: int, data_name: str, model: nn.Module, batch_size=32,
                                   panel: str = None):
+    start = time.time()
     model.eval()
     with torch.no_grad():
         dataset = dl.dataset
@@ -72,6 +78,7 @@ def plot_samples_with_predictions(trainer: Trainer, dl: DataLoader, n_classes: i
 
     trainer.wandb_log({f"{panel if panel is not None else 'prediction_plots'}/{data_name} predictions": tbl})
     model.train()
+    logging.debug(f"prediction plotting took: {time.time()-start}")
 
 
 if __name__ == '__main__':
