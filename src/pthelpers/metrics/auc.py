@@ -27,6 +27,8 @@ class AUC(Metric):
 
     def to(self, device):
         pass
+    def cuda(self, device):
+        pass
     def compute(self) -> Tensor:
         """Computes accuracy based on inputs passed in to ``update`` previously."""
         try:
