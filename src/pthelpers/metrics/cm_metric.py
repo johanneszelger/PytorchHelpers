@@ -24,13 +24,14 @@ class CmMetric(Metric):
             preds: Predictions from model (logits, probabilities, or labels)
             target: Ground truth labels
         """
+        one = torch.tensor(1).int()
         for i in range(len(preds)):
             had_det = False
             for j in range(len(preds[i])):
                 if preds[i, j] > 0.5:
                     had_label = False
                     for k in range(len(target[i])):
-                        if target[i, j] == 1:
+                        if target[i, j] == one:
                             self.preds.append(j + 1)
                             self.targets.append(k + 1)
                             had_label = True
@@ -41,13 +42,18 @@ class CmMetric(Metric):
             if not had_det:
                 had_label = False
                 for k in range(len(target[i])):
-                    if target[i, j] == 1:
+                    if target[i, j] == one:
                         self.preds.append(0)
                         self.targets.append(k + 1)
                         had_label = True
                 if not had_label:
-                    self.preds.append(0)
+                    torch.concat(self.preds, )
                     self.targets.append(0)
+
+    def to(self, device):
+        pass
+    def cuda(self, device):
+        pass
 
     def compute(self):
         """Computes accuracy based on inputs passed in to ``update`` previously."""
