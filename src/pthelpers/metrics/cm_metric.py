@@ -31,7 +31,7 @@ class CmMetric(Metric):
                 if preds[i, j] > 0.5:
                     had_label = False
                     for k in range(len(target[i])):
-                        if target[i, j] == one:
+                        if target[i, k] == one:
                             self.preds.append(j + 1)
                             self.targets.append(k + 1)
                             had_label = True
@@ -42,7 +42,7 @@ class CmMetric(Metric):
             if not had_det:
                 had_label = False
                 for k in range(len(target[i])):
-                    if target[i, j] == one:
+                    if target[i, k] == one:
                         self.preds.append(0)
                         self.targets.append(k + 1)
                         had_label = True
