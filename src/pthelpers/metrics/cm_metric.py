@@ -12,8 +12,8 @@ class CmMetric(Metric):
         super().__init__()
         self.name_prefix = name_prefix
         self.class_names = class_names
-        self.add_state("targets", default=torch.zeros(len(class_names)), dist_reduce_fx='sum')
-        self.add_state("preds", default=torch.zeros(len(class_names)), dist_reduce_fx='sum')
+        self.add_state("targets", default=torch.tensor([]), dist_reduce_fx='sum')
+        self.add_state("preds", default=torch.tensor([]), dist_reduce_fx='sum')
 
 
     def update(self, preds: Tensor, target: Tensor) -> None:  # type: ignore
@@ -24,15 +24,30 @@ class CmMetric(Metric):
             preds: Predictions from model (logits, probabilities, or labels)
             target: Ground truth labels
         """
-        if target.ndim == 1:
-            self.targets += target
-        else:
-            self.targets += target.sum(axis=0)
-        if preds.ndim == 1:
-            self.preds += preds
-        else:
-            self.preds += preds.sum(axis=0)
-
+        for i in range(len(preds)):
+            had_det = False
+            for j in range(len(preds[i])):
+                if preds[i, j] > 0.5:
+                    had_label = False
+                    for k in range(len(target[i])):
+                        if target[i, j] == 1:
+                            self.preds.append(j + 1)
+                            self.targets.append(k + 1)
+                            had_label = True
+                    if not had_label:
+                        self.preds.append(j + 1)
+                        self.targets.append(0)
+                    had_det = True
+            if not had_det:
+                had_label = False
+                for k in range(len(target[i])):
+                    if target[i, j] == 1:
+                        self.preds.append(0)
+                        self.targets.append(k + 1)
+                        had_label = True
+                if not had_label:
+                    self.preds.append(0)
+                    self.targets.append(0)
 
     def compute(self):
         """Computes accuracy based on inputs passed in to ``update`` previously."""
