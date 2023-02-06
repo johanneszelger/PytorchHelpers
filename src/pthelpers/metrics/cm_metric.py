@@ -57,7 +57,7 @@ class CmMetric(Metric):
 
     def compute(self):
         """Computes accuracy based on inputs passed in to ``update`` previously."""
-        return confusion_matrix(None, self.name_prefix + "_cm_table", self.targets, self.preds, ["None"] + self.class_names, self.name_prefix + "_cm")
+        return confusion_matrix(None, self.name_prefix + "_cm_table", self.targets.numpy(), self.preds.numpy(), ["None"] + self.class_names, self.name_prefix + "_cm")
 
 
 if __name__ == '__main__':
