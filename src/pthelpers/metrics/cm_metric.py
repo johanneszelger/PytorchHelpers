@@ -8,11 +8,10 @@ from pthelpers.logging.confusion_matrix import confusion_matrix
 class CmMetric(Metric):
     full_state_update: bool = False
 
-    def __init__(self, name_prefix: str, class_names, label_value: int):
+    def __init__(self, name_prefix: str, class_names):
         super().__init__()
         self.name_prefix = name_prefix
         self.class_names = class_names
-        self.label_value = label_value
         self.add_state("targets", default=torch.zeros(1), dist_reduce_fx='sum')
         self.add_state("preds", default=torch.zeros(1), dist_reduce_fx='sum')
 
@@ -35,10 +34,9 @@ class CmMetric(Metric):
             self.preds += target[:, self.label_value].sum()
 
 
-    def compute(self) -> Tensor:
+    def compute(self):
         """Computes accuracy based on inputs passed in to ``update`` previously."""
-        confusion_matrix(None, self.name + "_cm_table" + self.name, self.targets, self.preds, self.classnames, self.name_prefix + "_cm")
-        return None
+        return confusion_matrix(None, self.name + "_cm_table" + self.name, self.targets, self.preds, self.classnames, self.name_prefix + "_cm")
 
 
 if __name__ == '__main__':
