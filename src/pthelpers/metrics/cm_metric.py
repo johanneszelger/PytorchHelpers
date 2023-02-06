@@ -5,7 +5,7 @@ from torchmetrics import Metric
 from src.pthelpers.logging.confusion_matrix import confusion_matrix
 
 
-class ConfusionMatrix(Metric):
+class CmMetric(Metric):
     full_state_update: bool = False
 
     def __init__(self, name_prefix: str, class_names, label_value: int):
@@ -40,3 +40,8 @@ class ConfusionMatrix(Metric):
         confusion_matrix(None, self.name + "_cm_table" + self.name, self.targets, self.preds, self.classnames, self.name_prefix + "_cm")
         return None
 
+
+if __name__ == '__main__':
+    from torchmetrics.utilities import check_forward_full_state_property
+
+    check_forward_full_state_property(CmMetric, {"label_value": 0}, {"preds": [], "target": torch.tensor([0, 0, 1, 1, 0])})
