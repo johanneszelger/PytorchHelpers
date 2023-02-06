@@ -198,7 +198,11 @@ class Trainer:
 
                 self.__inter_epoch_validation(model, optimizer)
 
-                if self.config["save_every_nth_unit"] == "it" and self.batch % self.config["save_every_nth"] == 0:
+                if self.config["save_every_nth_unit"] == "batch" and self.batch % self.config["save_every_nth"] == 0:
+                    from pthelpers.training.persist import save_training_state
+                    save_training_state(self, model, optimizer)
+
+                if self.config["save_every_nth_unit"] == "sample" and self.sample % self.config["save_every_nth"] == 0:
                     from pthelpers.training.persist import save_training_state
                     save_training_state(self, model, optimizer)
 
