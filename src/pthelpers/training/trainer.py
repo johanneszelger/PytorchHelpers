@@ -76,8 +76,10 @@ class Trainer:
             self.config["warm_start"] = True
         if "cp_base_path" not in self.config:
             self.config["cp_base_path"] = None
-        if "save_every_nth_epoch" not in self.config and "cp_base_path" in self.config:
-            self.config["save_every_nth_epoch"] = 1
+        if "save_every_nth_unit" not in self.config and "cp_base_path" in self.config:
+            self.config["save_every_nth_unit"] = "epoch"
+        if "save_every_nth" not in self.config and "cp_base_path" in self.config:
+            self.config["save_every_nth"] = 1
         if "cleanup_after_training" not in self.config:
             self.config["cleanup_after_training"] = True
 
@@ -196,10 +198,14 @@ class Trainer:
 
                 self.__inter_epoch_validation(model, optimizer)
 
+                if self.config["save_every_nth_unit"] == "it" and self.batch % self.config["save_every_nth"] == 0:
+                    from pthelpers.training.persist import save_training_state
+                    save_training_state(self, model, optimizer)
+
         end_of_epoch_logged = self.__epoch_end_training_log(optimizer, model)
         self.__epoch_end_validation(model, optimizer)
 
-        if "save_every_nth_epoch" in self.config and self.epoch % self.config["save_every_nth_epoch"] == 0:
+        if self.config["save_every_nth_unit"] == "epoch" and self.epoch % self.config["save_every_nth"] == 0:
             from pthelpers.training.persist import save_training_state
             save_training_state(self, model, optimizer)
 

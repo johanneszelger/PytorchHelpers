@@ -63,7 +63,10 @@ def save_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer
     print(f'\nSaving checkpoint: {path}\n')
 
     if name is None:
-        name = f"epoch_{trainer.epoch}.pth"
+        if trainer.config["save_every_nth_unit"] == "epoch":
+            name = f"epoch_{trainer.epoch}.pth"
+        if trainer.config["save_every_nth_unit"] == "it":
+            name = f"epoch_{trainer.batch}.pth"
 
     torch.save({'epoch': trainer.epoch,
                 'batch': trainer.batch,
