@@ -32,23 +32,23 @@ class CmMetric(Metric):
                     had_label = False
                     for k in range(len(target[i])):
                         if target[i, k] == one:
-                            self.preds.append(j + 1)
-                            self.targets.append(k + 1)
+                            self.preds = torch.concat((self.preds, torch.tensor([j + 1])))
+                            self.targets = torch.concat((self.targets, torch.tensor([k + 1])))
                             had_label = True
                     if not had_label:
-                        self.preds.append(j + 1)
-                        self.targets.append(0)
+                        self.preds = torch.concat((self.preds, torch.tensor([j + 1])))
+                        self.targets = torch.concat((self.targets, torch.tensor([0])))
                     had_det = True
             if not had_det:
                 had_label = False
                 for k in range(len(target[i])):
                     if target[i, k] == one:
-                        self.preds.append(0)
-                        self.targets.append(k + 1)
+                        self.preds = torch.concat((self.preds, torch.tensor([0])))
+                        self.targets = torch.concat((self.targets, torch.tensor([k + 1])))
                         had_label = True
                 if not had_label:
-                    torch.concat(self.preds, )
-                    self.targets.append(0)
+                    self.preds = torch.concat((self.preds, torch.tensor([0])))
+                    self.targets = torch.concat((self.targets, torch.tensor([0])))
 
     def to(self, device):
         pass
