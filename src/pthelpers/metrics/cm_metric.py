@@ -25,13 +25,13 @@ class CmMetric(Metric):
             target: Ground truth labels
         """
         if target.ndim == 1:
-            self.targets += (target == self.label_value).sum()
+            self.targets += target
         else:
-            self.targets += target[:, self.label_value].sum()
+            self.targets += target.sum(axis=0)
         if preds.ndim == 1:
-            self.preds += (target == self.label_value).sum()
+            self.preds += preds
         else:
-            self.preds += target[:, self.label_value].sum()
+            self.preds += preds.sum(axis=0)
 
 
     def compute(self):
