@@ -8,12 +8,12 @@ from pthelpers.logging.confusion_matrix import confusion_matrix
 class CmMetric(Metric):
     full_state_update: bool = False
 
-    def __init__(self, name_prefix: str, class_names):
+    def __init__(self, name_prefix: str, class_names, count):
         super().__init__()
         self.name_prefix = name_prefix
         self.class_names = class_names
-        self.add_state("targets", default=torch.zeros(1), dist_reduce_fx='sum')
-        self.add_state("preds", default=torch.zeros(1), dist_reduce_fx='sum')
+        self.add_state("targets", default=torch.zeros(count), dist_reduce_fx='sum')
+        self.add_state("preds", default=torch.zeros(count), dist_reduce_fx='sum')
 
 
     def update(self, preds: Tensor, target: Tensor) -> None:  # type: ignore
