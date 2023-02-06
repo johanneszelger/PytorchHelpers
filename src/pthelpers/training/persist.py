@@ -77,7 +77,7 @@ def save_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer
                 }
 
     if trainer.last_val_data:
-        data += trainer.last_val_data
+        data = dict(data, **trainer.last_val_data)
 
     torch.save(data,
                osp.join(path, name), pickle_module=dill)
