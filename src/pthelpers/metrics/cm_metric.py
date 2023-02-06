@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 from torchmetrics import Metric
 
-from src.pthelpers.logging.confusion_matrix import confusion_matrix
+from pthelpers.logging.confusion_matrix import confusion_matrix
 
 
 class CmMetric(Metric):
