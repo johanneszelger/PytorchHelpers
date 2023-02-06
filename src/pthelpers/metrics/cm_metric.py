@@ -30,14 +30,18 @@ class CmMetric(Metric):
             for j in range(len(preds[i])):
                 if preds[i, j] > 0.5:
                     had_label = False
-                    for k in range(len(target[i])):
-                        if target[i, k] == one:
-                            self.preds = torch.concat((self.preds, torch.tensor([j + 1])))
-                            self.targets = torch.concat((self.targets, torch.tensor([k + 1])))
-                            had_label = True
-                    if not had_label:
+                    if(target[i, j] == one):
                         self.preds = torch.concat((self.preds, torch.tensor([j + 1])))
-                        self.targets = torch.concat((self.targets, torch.tensor([0])))
+                        self.targets = torch.concat((self.targets, torch.tensor([j + 1])))
+                    else:
+                        for k in range(len(target[i])):
+                            if target[i, k] == one:
+                                self.preds = torch.concat((self.preds, torch.tensor([j + 1])))
+                                self.targets = torch.concat((self.targets, torch.tensor([k + 1])))
+                                had_label = True
+                        if not had_label:
+                            self.preds = torch.concat((self.preds, torch.tensor([j + 1])))
+                            self.targets = torch.concat((self.targets, torch.tensor([0])))
                     had_det = True
             if not had_det:
                 had_label = False
