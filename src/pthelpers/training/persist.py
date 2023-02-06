@@ -68,13 +68,18 @@ def save_training_state(trainer: Trainer, model: nn.Module, optimizer: Optimizer
         if trainer.config["save_every_nth_unit"] == "it":
             name = f"epoch_{trainer.batch}.pth"
 
-    torch.save({'epoch': trainer.epoch,
+    data = {'epoch': trainer.epoch,
                 'batch': trainer.batch,
                 'sample': trainer.sample,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'best_loss': trainer.best_validation_loss,
-                },
+                }
+
+    if trainer.last_val_data:
+        data += trainer.last_val_data
+
+    torch.save(data,
                osp.join(path, name), pickle_module=dill)
 
 

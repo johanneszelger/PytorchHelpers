@@ -56,6 +56,7 @@ class Trainer:
         self.n_classes = n_classes
         self.metrics = metrics if metrics is not None else {}
         self.__val_metrics = copy.deepcopy(self.metrics)
+        self.last_val_data = {}
 
         self.__logging_infos = {}
         self.device = should_use_cuda(no_cuda)
@@ -355,7 +356,7 @@ class Trainer:
             res = metric.compute()
             data["v_" + name] = res.item()
             metric.reset()
-
+        self.last_val_data = data
         self.wandb_log(data, "validation results/")
 
         if loss < self.best_validation_loss:
