@@ -60,6 +60,13 @@ def confusion_matrix(
         for j in range(n_classes):
             data.append([class_names[i], class_names[j], counts[i, j]])
 
+    if trainer is None:
+        return wandb.plot_table(
+                "wandb/confusion_matrix/v1",
+                wandb.Table(columns=["Actual", "Predicted", "nPredictions"], data=data),
+                fields,
+                {"title": title},
+        )
     return trainer.wandb_log({f"confusion_matrices/{table_name}": wandb.plot_table(
         "wandb/confusion_matrix/v1",
         wandb.Table(columns=["Actual", "Predicted", "nPredictions"], data=data),
